@@ -10,10 +10,17 @@ public class PlayerManagement {
 		this.plugin = plugin;
 	}
 	
-	public void setBuilding(UUID uuid, boolean val)
+	public void setBuilding(UUID uuid, boolean val, String name)
 	{
-		if(!building.containsKey(uuid)) building.put(uuid, val);
-		else building.replace(uuid, val);
+		if(!building.containsKey(uuid)) 
+		{
+			building.put(uuid, val);
+		} else building.replace(uuid, val);
+		
+		if(!current.containsKey(uuid)) 
+		{
+			current.put(uuid, name);
+		} else current.replace(uuid, name);
 	}
 	
 	public boolean isBuilding(UUID uuid)
