@@ -1,4 +1,6 @@
-package com.SamB440.Civilization.API.data;
+/*
+ * BLOCK BY BLOCK VERSION ONLY!
+ */
 
 import java.io.File;
 import java.io.FileInputStream;
