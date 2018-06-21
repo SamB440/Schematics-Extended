@@ -24,13 +24,13 @@ import net.minecraft.server.v1_12_R1.NBTTagCompound;
  */
 public class Schematic {
 	
-	private Civilization plugin;
+	private JavaPlugin plugin;
 	private File schematic;
 	private List<Integer> pastes = new ArrayList<Integer>();
 	private int current = 0;
 	@Getter @Setter boolean pasted;
 	
-	public Schematic(Civilization plugin, File schematic)
+	public Schematic(JavaPlugin plugin, File schematic)
 	{
 		this.plugin = plugin;
 		this.schematic = schematic;
