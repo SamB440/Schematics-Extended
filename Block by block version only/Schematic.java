@@ -5,6 +5,7 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.Bukkit;
@@ -15,8 +16,6 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import com.SamB440.Civilization.Civilization;
-
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.server.v1_12_R1.NBTCompressedStreamTools;
@@ -26,7 +25,7 @@ import net.minecraft.server.v1_12_R1.NBTTagCompound;
  * @author Jojodmo - Schematic Reader
  * @author SamB440 - Schematic previews, centering and pasting block-by-block
  */
-public class Schematic {
+public class SchematicReplacer {
 	
 	private JavaPlugin plugin;
 	private File schematic;
@@ -34,7 +33,7 @@ public class Schematic {
 	private int current = 0;
 	@Getter @Setter boolean pasted;
 	
-	public Schematic(JavaPlugin plugin, File schematic)
+	public SchematicReplacer(JavaPlugin plugin, File schematic)
 	{
 		this.plugin = plugin;
 		this.schematic = schematic;
@@ -62,8 +61,8 @@ public class Schematic {
 
 			List<Integer> indexes = new ArrayList<Integer>();
 			List<Location> locations = new ArrayList<Location>();
-			List<Integer> liquidindex = new ArrayList<Integer>();
-			List<Location> liquidloc = new ArrayList<Location>();
+			List<Integer> otherindex = new ArrayList<Integer>();
+			List<Location> otherloc = new ArrayList<Location>();
 	   
 			/*
 			 * Loop through all the blocks within schematic size.
@@ -75,23 +74,38 @@ public class Schematic {
 					for(int z = 0; z < length; ++z)
 					{
 						int index = y * width * length + z * width + x;
-						final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
+						final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + loc.getY(), (z + loc.getZ()) - (int) length / 2);
 						
 						/*
 						 * Ignore blocks that aren't air. Change this if you want the air to destroy blocks too.
+						 * Add items to blacklist if you want them placed last, or if they get broken.
 						 * IMPORTANT!
 						 * Make the block unsigned, so that blocks with an id over 127, like quartz and emerald, can be pasted.
 						 */
 						Material material = Material.getMaterial(blocks[index] & 0xFF);
+						List<Material> blacklist = Arrays.asList(Material.STATIONARY_LAVA, 
+								Material.STATIONARY_WATER,
+								Material.GRASS,
+								Material.ARMOR_STAND,
+								Material.LONG_GRASS,
+								Material.BANNER,
+								Material.STANDING_BANNER,
+								Material.WALL_BANNER,
+								Material.CHORUS_FLOWER,
+								Material.CROPS,
+								Material.DOUBLE_PLANT,
+								Material.CHORUS_PLANT,
+								Material.YELLOW_FLOWER,
+								Material.TORCH);
 						if(material != Material.AIR)
 						{
-							if(material != Material.STATIONARY_LAVA && material != Material.STATIONARY_WATER)
+							if(!blacklist.contains(material))
 							{
 								indexes.add(index);
 								locations.add(location);
 							} else {
-								liquidindex.add(index);
-								liquidloc.add(location);
+								otherindex.add(index);
+								otherloc.add(location);
 							}
 						}
 					}
@@ -102,19 +116,19 @@ public class Schematic {
 			 * Make sure liquids are placed last.
 			 */
 			
-			for(Integer index : liquidindex)
+			for(Integer index : otherindex)
 			{
 				indexes.add(index);
 			}
 			
-			liquidindex.clear();
+			otherindex.clear();
 			
-			for(Location location : liquidloc)
+			for(Location location : otherloc)
 			{
 				locations.add(location);
 			}
 			
-			liquidloc.clear();
+			otherloc.clear();
 			
 			/*
 			 * Start pasting each block every tick
@@ -170,3 +184,4 @@ public class Schematic {
 		}
 	}
 }
+
