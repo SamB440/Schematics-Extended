@@ -72,7 +72,7 @@ public class Schematic {
 					for(int z = 0; z < length; ++z)
 					{
 						int index = y * width * length + z * width + x;
-						final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + loc.getY(), (z + loc.getZ()) - (int) length / 2);
+						final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
 						
 						/*
 						 * Ignore blocks that aren't air. Change this if you want the air to destroy blocks too.
