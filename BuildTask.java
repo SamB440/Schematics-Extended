@@ -12,6 +12,9 @@ import com.SamB440.Civilization.API.data.SettlementClaim;
 
 import lombok.Getter;
 
+/**
+ * @author SamB440
+ */
 public class BuildTask implements Runnable {
 	
 	private JavaPlugin plugin;
