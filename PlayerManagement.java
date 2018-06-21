@@ -1,3 +1,6 @@
+/**
+ * @author SamB440
+ */
 public class PlayerManagement {
 	
 	private JavaPlugin plugin;
