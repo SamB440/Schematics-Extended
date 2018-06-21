@@ -12,8 +12,6 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import com.SamB440.Civilization.Civilization;
-
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.server.v1_12_R1.NBTCompressedStreamTools;
@@ -181,7 +179,7 @@ public class Schematic {
 				final Block block = locations.get(current).getBlock();
 				block.setType(Material.getMaterial(blocks[indexes.get(current)] & 0xFF));
 				block.setData(data[indexes.get(current)]);
-				block.getState().update();
+				block.getState().update(true, false);
 				
 				/*
 				 * Play block effects
