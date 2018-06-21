@@ -14,7 +14,8 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
+
+import com.SamB440.Civilization.Civilization;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +24,7 @@ import net.minecraft.server.v1_12_R1.NBTTagCompound;
 
 /**
  * @author Jojodmo - Schematic Reader
- * @author SamB440 - Schematic previews and pasting block-by-block
+ * @author SamB440 - Schematic previews, centering and pasting block-by-block
  */
 public class Schematic {
 	
@@ -74,7 +75,7 @@ public class Schematic {
 					for(int z = 0; z < length; ++z)
 					{
 						int index = y * width * length + z * width + x;
-						final Location location = new Location(loc.getWorld(), x + loc.getX(), y + paster.getLocation().getY(), z + loc.getZ());
+						final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
 						
 						/*
 						 * Ignore blocks that aren't air. Change this if you want the air to destroy blocks too.
@@ -169,4 +170,3 @@ public class Schematic {
 		}
 	}
 }
-
