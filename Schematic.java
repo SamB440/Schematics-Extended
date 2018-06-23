@@ -12,6 +12,8 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
+import com.SamB440.Civilization.Civilization;
+
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.server.v1_12_R1.NBTCompressedStreamTools;
@@ -23,13 +25,13 @@ import net.minecraft.server.v1_12_R1.NBTTagCompound;
  */
 public class Schematic {
 	
-	private JavaPlugin plugin;
+	private Civilization plugin;
 	private File schematic;
 	private List<Integer> pastes = new ArrayList<Integer>();
 	private int current = 0;
 	@Getter @Setter boolean pasted;
 	
-	public Schematic(JavaPlugin plugin, File schematic)
+	public Schematic(Civilization plugin, File schematic)
 	{
 		this.plugin = plugin;
 		this.schematic = schematic;
@@ -70,8 +72,8 @@ public class Schematic {
 					for(int z = 0; z < length; ++z)
 					{
 						int index = y * width * length + z * width + x;
-						final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
 						
+						final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
 						/*
 						 * Ignore blocks that aren't air. Change this if you want the air to destroy blocks too.
 						 * Add items to blacklist if you want them placed last, or if they get broken.
@@ -135,17 +137,15 @@ public class Schematic {
 			
 			for(Location validate : locations)
 			{
-				if((validate.getBlock().getType() != Material.AIR || new Location(validate.getWorld(), validate.getX(), paster.getLocation().getY() - 1, validate.getZ()).getBlock().getType() == Material.AIR))
+				if((validate.getBlock().getType() != Material.AIR || validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.STATIONARY_WATER) || new Location(validate.getWorld(), validate.getX(), paster.getLocation().getY() - 1, validate.getZ()).getBlock().getType() == Material.AIR)
 				{
-					
 					/*
 					 * Show fake block where block is interfering with schematic
 					 */
 					
 		            paster.sendBlockChange(validate.getBlock().getLocation(), Material.STAINED_GLASS, (byte) 14);
 		            if(!preview) Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> validate.getBlock().getState().update(), 60);
-		            validated = false;	
-		            
+		            validated = false;
 				} else {
 					
 					/*
