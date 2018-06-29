@@ -12,8 +12,6 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import com.SamB440.Civilization.Civilization;
-
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.server.v1_12_R1.NBTCompressedStreamTools;
@@ -25,20 +23,20 @@ import net.minecraft.server.v1_12_R1.NBTTagCompound;
  */
 public class Schematic {
 	
-	private Civilization plugin;
+	private JavaPlugin plugin;
 	private File schematic;
 	private List<Integer> pastes = new ArrayList<Integer>();
 	private int current = 0;
 	@Getter @Setter boolean pasted;
 	
-	public Schematic(Civilization plugin, File schematic)
+	public Schematic(JavaPlugin plugin, File schematic)
 	{
 		this.plugin = plugin;
 		this.schematic = schematic;
 	}
 
 	@SuppressWarnings("deprecation")
-	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview)
+	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview, int time)
 	{
 		try {
 			
@@ -197,7 +195,7 @@ public class Schematic {
 					current = 0;
 				}
 				
-			}, 0, 20));
+			}, 0, time));
 			
 			pastes.add(scheduler.getTask());
 			
@@ -205,6 +203,11 @@ public class Schematic {
 		} catch(Exception e) {
 			e.printStackTrace();
 		} return null;
+	}
+	
+	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview)
+	{
+		return pasteSchematic(loc, paster, preview, 20);
 	}
 	
 	/**
@@ -219,4 +222,3 @@ public class Schematic {
 		}
 	}
 }
-
