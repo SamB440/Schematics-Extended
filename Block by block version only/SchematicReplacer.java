@@ -16,8 +16,6 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import com.SamB440.Civilization.Civilization;
-
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.server.v1_12_R1.NBTCompressedStreamTools;
@@ -42,7 +40,7 @@ public class SchematicReplacer {
 	}
 
 	@SuppressWarnings("deprecation")
-	public List<Location> pasteSchematic(Location loc, Player paster)
+	public List<Location> pasteSchematic(Location loc, Player paster, int time)
 	{
 		try {
 			
@@ -164,7 +162,7 @@ public class SchematicReplacer {
 					current = 0;
 				}
 				
-			}, 0, 20));
+			}, 0, time));
 			
 			pastes.add(scheduler.getTask());
 			
@@ -172,6 +170,11 @@ public class SchematicReplacer {
 		} catch(Exception e) {
 			e.printStackTrace();
 		} return null;
+	}
+	
+	public List<Location> pasteSchematic(Location loc, Player paster)
+	{
+		return pasteSchematic(loc, paster, 20);
 	}
 	
 	/**
@@ -186,3 +189,4 @@ public class SchematicReplacer {
 		}
 	}
 }
+
