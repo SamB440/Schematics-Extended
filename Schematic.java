@@ -67,11 +67,11 @@ public class Schematic {
 			 *    and store the custom ID and BlockData in the palette Map
 			 */
 			
-            palette.getKeys().forEach(rawState -> {
-                int id = palette.getInt(rawState);
-                BlockData blockData = Bukkit.createBlockData(rawState);
-                blocks.put(id, blockData);
-            });
+			palette.getKeys().forEach(rawState -> {
+				int id = palette.getInt(rawState);
+				BlockData blockData = Bukkit.createBlockData(rawState);
+				blocks.put(id, blockData);
+			});
 
 			fis.close();
 
