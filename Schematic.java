@@ -12,17 +12,20 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.islandearth.islandearth.IslandEarth;
 import net.minecraft.server.v1_13_R2.NBTCompressedStreamTools;
 import net.minecraft.server.v1_13_R2.NBTTagCompound;
 
 /**
  * @author Jojodmo - Legacy Schematic Reader
  * @author brainsynder - 1.13 Schematic Reader
+ * @author Math0424 - Rotation calculations
  * @author SamB440 - Schematic previews, centering and pasting block-by-block
  */
 public class Schematic {
@@ -91,14 +94,32 @@ public class Schematic {
 					{
 						int index = y * width * length + z * width + x;
 						
-						final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
+						Location location = null;
+						
+						//final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
+						switch(getDirection(paster))
+						{
+							case NORTH:
+								location = new Location(loc.getWorld(), (x * - 1 + loc.getX()) + (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) + (int) length / 2);
+								break;
+							case EAST:
+								location = new Location(loc.getWorld(), (-z + loc.getX()) - (int) length / 2, y + paster.getLocation().getY(), (-x - 1) + (width + loc.getZ()) - (int) width / 2);
+								break;
+							case SOUTH:
+								location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z * - 1 + loc.getZ()) - (int) length / 2);
+								break;
+							case WEST:
+								location = new Location(loc.getWorld(), (z + loc.getX()) + (int) length / 2, y + paster.getLocation().getY(), (x + 1) - (width - loc.getZ()) + (int) width / 2);
+								break;
+							default:
+								break;
+						}
+						
 						BlockData data = blocks.get((int) blockDatas[index]);
 						
 						/*
 						 * Ignore blocks that aren't air. Change this if you want the air to destroy blocks too.
 						 * Add items to blacklist if you want them placed last, or if they get broken.
-						 * IMPORTANT!
-						 * Make the block unsigned, so that blocks with an id over 127, like quartz and emerald, can be pasted.
 						 */
 						Material material = data.getMaterial();
 						List<Material> blacklist = Arrays.asList(Material.LAVA, 
@@ -232,7 +253,12 @@ public class Schematic {
 					 */
 					
 		            paster.sendBlockChange(validate.getBlock().getLocation(), Material.RED_STAINED_GLASS.createBlockData());
-		            if(!preview) Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> validate.getBlock().getState().update(), 60);
+		            if(!preview)
+		            {
+			            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+			            	if(validate.getBlock().getType() == Material.AIR) paster.sendBlockChange(validate.getBlock().getLocation(), Material.AIR.createBlockData());
+			            }, 60);
+		            }
 		            validated = false;
 				} else {
 					
@@ -241,7 +267,12 @@ public class Schematic {
 					 */
 					
 		            paster.sendBlockChange(validate.getBlock().getLocation(), Material.GREEN_STAINED_GLASS.createBlockData());
-		            if(!preview) Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> validate.getBlock().getState().update(), 60);
+		            if(!preview)
+		            {
+			            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+			            	if(validate.getBlock().getType() == Material.AIR) paster.sendBlockChange(validate.getBlock().getLocation(), Material.AIR.createBlockData());
+			            }, 60);
+		            }
 				}
 			}
 			
@@ -311,5 +342,24 @@ public class Schematic {
 			pastes.remove(tasks);
 		}
 	}
+	
+	private BlockFace getDirection(Player player) 
+	{
+		float yaw = player.getLocation().getYaw();
+		if(yaw < 0) 
+		{
+			yaw += 360;
+        }
+		
+		if(yaw >= 315 || yaw < 45) 
+		{
+			return BlockFace.SOUTH;
+		} else if(yaw < 135) {
+			return BlockFace.WEST;
+		} else if(yaw < 225) {
+			return BlockFace.NORTH;
+		} else if(yaw < 315) {
+			return BlockFace.EAST;
+		} return BlockFace.NORTH;
+	}
 }
-
