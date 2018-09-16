@@ -18,7 +18,6 @@ import org.bukkit.entity.Player;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.islandearth.islandearth.IslandEarth;
 import net.minecraft.server.v1_13_R2.NBTCompressedStreamTools;
 import net.minecraft.server.v1_13_R2.NBTTagCompound;
 
