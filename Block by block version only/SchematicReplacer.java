@@ -302,7 +302,7 @@ public class Schematic {
 		if(yaw < 0) 
 		{
 			yaw += 360;
-        }
+		}
 		
 		if(yaw >= 315 || yaw < 45) 
 		{
