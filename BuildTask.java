@@ -5,11 +5,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import com.SamB440.Civilization.Civilization;
-import com.SamB440.Civilization.API.data.CivPlayer;
-import com.SamB440.Civilization.API.data.Settlement;
-import com.SamB440.Civilization.API.data.SettlementClaim;
-
 import lombok.Getter;
 
 /**
@@ -18,7 +13,7 @@ import lombok.Getter;
 public class BuildTask implements Runnable {
 	
 	private JavaPlugin plugin;
-	@Getter private HashMap<Player, List<Location>> cache = new HashMap<Player, List<Location>>();
+	@Getter private Map<Player, List<Location>> cache = new HashMap<>();
 	
 	public BuildTask(JavaPlugin plugin)
 	{
@@ -32,8 +27,8 @@ public class BuildTask implements Runnable {
 		{
 			if(plugin.getPlayerManagement().isBuilding(player.getUniqueId()))
 			{
-				List<Location> locations = plugin.getPlayerManagement.getBuilding(player.getUniqueId()).pasteSchematic(player.getTargetBlock(null, 7).getLocation().add(0, 1, 0), player, true);
-				Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+				List<Location> locations = plugin.getPlayerManagement().getBuilding(player.getUniqueId()).pasteSchematic(player.getTargetBlock(null, 7).getLocation().add(0, 1, 0), player, true);
+				Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
 					if(cache.containsKey(player))
 					{
 						if(!cache.get(player).equals(locations))
@@ -41,14 +36,15 @@ public class BuildTask implements Runnable {
 							int current = 0;
 							for(Location location : cache.get(player))
 							{
-								if(location.distance(locations.get(current)) >= 1) location.getBlock().getState().update(true, false);
+								if(current == locations.size()) break;
+								if(location.distance(locations.get(current)) >= 1) player.sendBlockChange(location, location.getBlock().getBlockData());
 								current++;
 							}
 							cache.remove(player);
 						}
 					}
 				if(!cache.containsKey(player)) cache.put(player, locations);
-				}, 20);
+				}, 2L);
 			}
 		}
 	}
