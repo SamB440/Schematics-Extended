@@ -14,6 +14,7 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
 import org.bukkit.entity.Player;
 
 import lombok.Getter;
@@ -81,6 +82,8 @@ public class Schematic {
 			List<Location> locations = new ArrayList<Location>();
 			List<Integer> otherindex = new ArrayList<Integer>();
 			List<Location> otherloc = new ArrayList<Location>();
+			
+			BlockFace face = getDirection(paster);
 	   
 			/*
 			 * Loop through all the blocks within schematic size.
@@ -96,7 +99,7 @@ public class Schematic {
 						Location location = null;
 						
 						//final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
-						switch(getDirection(paster))
+						switch(face)
 						{
 							case NORTH:
 								location = new Location(loc.getWorld(), (x * - 1 + loc.getX()) + (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) + (int) length / 2);
@@ -251,6 +254,99 @@ public class Schematic {
 				BlockData data = blocks.get((int) blockDatas[indexes.get(current)]);
 				block.setType(data.getMaterial());
 				block.setBlockData(data);
+				
+				if(data.toString().contains("stairs") 
+                		|| data.toString().contains("ladder") 
+                		|| data.toString().contains("torch") 
+                		|| data.toString().contains("chest")) {
+					Directional facing = (Directional) block.getState().getBlockData();
+					switch(face)
+					{
+						case NORTH:
+							switch(facing.getFacing())
+							{
+								case NORTH:
+									facing.setFacing(BlockFace.NORTH);
+									break;
+								case SOUTH:
+									facing.setFacing(BlockFace.SOUTH);
+									break;
+								case EAST:
+									facing.setFacing(BlockFace.WEST);
+									break;
+								case WEST:
+									facing.setFacing(BlockFace.EAST);
+									break;
+								default:
+									break;
+							}
+							
+							break;
+						case EAST:
+							switch(facing.getFacing())
+							{
+								case NORTH:
+									facing.setFacing(BlockFace.EAST);
+									break;
+								case SOUTH:
+									facing.setFacing(BlockFace.WEST);
+									break;
+								case EAST:
+									facing.setFacing(BlockFace.NORTH);
+									break;
+								case WEST:
+									facing.setFacing(BlockFace.SOUTH);
+									break;
+								default:
+									break;
+							}
+							
+							break;
+						case SOUTH:
+							switch(facing.getFacing())
+							{
+								case NORTH:
+									facing.setFacing(BlockFace.SOUTH);
+									break;
+								case SOUTH:
+									facing.setFacing(BlockFace.NORTH);
+									break;
+								case EAST:
+									facing.setFacing(BlockFace.EAST);
+									break;
+								case WEST:
+									facing.setFacing(BlockFace.WEST);
+									break;
+								default:
+									break;
+							}
+							
+							break;
+						case WEST:
+							switch(facing.getFacing())
+							{
+								case NORTH:
+									facing.setFacing(BlockFace.WEST);
+									break;
+								case SOUTH:
+									facing.setFacing(BlockFace.EAST);
+									break;
+								case EAST:
+									facing.setFacing(BlockFace.SOUTH);
+									break;
+								case WEST:
+									facing.setFacing(BlockFace.NORTH);
+									break;
+								default:
+									break;
+							}
+							
+							break;
+						default:
+							break;
+					} block.setBlockData(facing);
+				}
+				
 				block.getState().update(true, false);
 				
 				/*
@@ -302,7 +398,7 @@ public class Schematic {
 		if(yaw < 0) 
 		{
 			yaw += 360;
-		}
+        }
 		
 		if(yaw >= 315 || yaw < 45) 
 		{
