@@ -15,12 +15,20 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.type.Sign;
+import org.bukkit.block.data.type.WallSign;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.server.v1_13_R2.NBTCompressedStreamTools;
 import net.minecraft.server.v1_13_R2.NBTTagCompound;
+import net.minecraft.server.v1_13_R2.NBTTagList;
 
 /**
  * @author Jojodmo - Legacy Schematic Reader
@@ -33,23 +41,19 @@ public class Schematic {
 	private JavaPlugin plugin;
 	private File schematic;
 	private List<Integer> pastes = new ArrayList<Integer>();
-	private int current = 0;
 	@Getter @Setter private boolean pasted;
 	
-	public Schematic(JavaPlugin plugin, File schematic)
-	{
+	public Schematic(JavaPlugin plugin, File schematic) {
 		this.plugin = plugin;
 		this.schematic = schematic;
 	}
 
-	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview, int time)
-	{
+	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview, int time) {
 		try {
-			
+			Data tracker = new Data();
 			/*
 			 * Read the schematic file. Get the width, height, length, blocks, and block data.
 			 */
-			
 			FileInputStream fis = new FileInputStream(schematic);
 			NBTTagCompound nbt = NBTCompressedStreamTools.a(fis);
 
@@ -59,7 +63,10 @@ public class Schematic {
 
 			byte[] blockDatas = nbt.getByteArray("BlockData");
 			NBTTagCompound palette = nbt.getCompound("Palette");
+			NBTTagList tiles = (NBTTagList) nbt.get("TileEntities");
+			tracker.trackCurrentTile = tiles.size() - 1;
 			
+			Map<Integer, List<String>> signs = new HashMap<>();
 			Map<Integer, BlockData> blocks = new HashMap<>();
 			
 			/*
@@ -69,11 +76,53 @@ public class Schematic {
 			 *    So I loop through all the Keys in the "Palette" Compound
 			 *    and store the custom ID and BlockData in the palette Map
 			 */
-			
+
 			palette.getKeys().forEach(rawState -> {
 				int id = palette.getInt(rawState);
 				BlockData blockData = Bukkit.createBlockData(rawState);
 				blocks.put(id, blockData);
+				
+				/*
+				 * Load the NBT and Json data of signs.
+				 */
+				if (blockData.getMaterial() == Material.SIGN
+						|| blockData.getMaterial() == Material.WALL_SIGN) {
+					if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
+						NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
+						List<String> lines = new ArrayList<>();
+						
+						String s1 = c.getString("Text1");
+						JsonObject jobj = new Gson().fromJson(s1, JsonObject.class);
+						if (jobj.get("extra") != null) {
+							JsonArray array = jobj.get("extra").getAsJsonArray();
+							lines.add(array.get(0).getAsJsonObject().get("text").getAsString());
+						}
+						
+						String s2 = c.getString("Text2");
+						JsonObject jobj2 = new Gson().fromJson(s2, JsonObject.class);
+						if (jobj2.get("extra") != null) {
+							JsonArray array = jobj2.get("extra").getAsJsonArray();
+							lines.add(array.get(0).getAsJsonObject().get("text").getAsString());
+						}
+						
+						String s3 = c.getString("Text3");
+						JsonObject jobj3 = new Gson().fromJson(s3, JsonObject.class);
+						if (jobj3.get("extra") != null) {
+							JsonArray array = jobj3.get("extra").getAsJsonArray();
+							lines.add(array.get(0).getAsJsonObject().get("text").getAsString());
+						}
+						
+						String s4 = c.getString("Text4");
+						JsonObject jobj4 = new Gson().fromJson(s4, JsonObject.class);
+						if (jobj4.get("extra") != null) {
+							JsonArray array = jobj4.get("extra").getAsJsonArray();
+							lines.add(array.get(0).getAsJsonObject().get("text").getAsString());
+						}
+						
+						if (!lines.isEmpty()) signs.put(id, lines);
+						tracker.trackCurrentTile = tracker.trackCurrentTile - 1;
+					}
+				}
 			});
 
 			fis.close();
@@ -88,12 +137,9 @@ public class Schematic {
 			/*
 			 * Loop through all the blocks within schematic size.
 			 */
-			for(int x = 0; x < width; ++x)
-			{
-				for(int y = 0; y < height; ++y)
-				{
-					for(int z = 0; z < length; ++z)
-					{
+			for(int x = 0; x < width; ++x) {
+				for(int y = 0; y < height; ++y) {
+					for(int z = 0; z < length; ++z) {
 						int index = y * width * length + z * width + x;
 						
 						Location location = null;
@@ -290,27 +336,65 @@ public class Schematic {
 			 */
 			Scheduler scheduler = new Scheduler();
 			
+			tracker.trackCurrentBlock = 0;
+			
 			scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
 				
 				/*
 				 * Get the block, set the type, data, and then update the state.
 				 */
 				
-				final Block block = locations.get(current).getBlock();
-				BlockData data = blocks.get((int) blockDatas[indexes.get(current)]);
+				Block block = locations.get(tracker.trackCurrentBlock).getBlock();
+				BlockData data = blocks.get((int) blockDatas[indexes.get(tracker.trackCurrentBlock)]);
 				block.setType(data.getMaterial());
 				block.setBlockData(data);
+				if (data.getMaterial() == Material.SIGN) {
+					Sign signData = (Sign) data;
+					block.setBlockData(signData);
+					
+					for (Integer b : signs.keySet()) {
+						if ((int) blockDatas[indexes.get(tracker.trackCurrentBlock)] == b) {
+							org.bukkit.block.Sign sign = (org.bukkit.block.Sign) block.getState();
+							List<String> lines = signs.get(b);
+							sign.setLine(0, lines.get(0));
+							if (lines.size() >= 2) sign.setLine(1, lines.get(1));
+							if (lines.size() >= 3) sign.setLine(2, lines.get(2));
+							if (lines.size() >= 4) sign.setLine(3, lines.get(3));
+							sign.update();
+							signs.remove(b);
+						}
+					}
+				} else {
+					if (data.getMaterial() == Material.WALL_SIGN) {
+						WallSign signData = (WallSign) data;
+						block.setBlockData(signData);
+						
+						for (Integer b : signs.keySet()) {
+							if ((int) blockDatas[indexes.get(tracker.trackCurrentBlock)] == b) {
+								org.bukkit.block.Sign sign = (org.bukkit.block.Sign) block.getState();
+								List<String> lines = signs.get(b);
+								sign.setLine(0, lines.get(0));
+								if (lines.size() >= 2) sign.setLine(1, lines.get(1));
+								if (lines.size() >= 3) sign.setLine(2, lines.get(2));
+								if (lines.size() >= 4) sign.setLine(3, lines.get(3));
+								sign.update();
+								signs.remove(b);
+							}
+						}
+					}
+				}
 				
-				if(data.toString().contains("stairs") 
+				block.getState().update(true, false);
+				
+				if (data.toString().contains("stairs") 
                 		|| data.toString().contains("ladder") 
                 		|| data.toString().contains("torch") 
-                		|| data.toString().contains("chest")) {
+                		|| data.toString().contains("chest")
+                		|| data.toString().contains("sign")) {
 					Directional facing = (Directional) block.getState().getBlockData();
-					switch(face)
-					{
+					switch (face) {
 						case NORTH:
-							switch(facing.getFacing())
-							{
+							switch (facing.getFacing()) {
 								case NORTH:
 									facing.setFacing(BlockFace.NORTH);
 									break;
@@ -329,8 +413,7 @@ public class Schematic {
 							
 							break;
 						case EAST:
-							switch(facing.getFacing())
-							{
+							switch (facing.getFacing()) {
 								case NORTH:
 									facing.setFacing(BlockFace.EAST);
 									break;
@@ -349,8 +432,7 @@ public class Schematic {
 							
 							break;
 						case SOUTH:
-							switch(facing.getFacing())
-							{
+							switch (facing.getFacing()) {
 								case NORTH:
 									facing.setFacing(BlockFace.SOUTH);
 									break;
@@ -369,8 +451,7 @@ public class Schematic {
 							
 							break;
 						case WEST:
-							switch(facing.getFacing())
-							{
+							switch (facing.getFacing()) {
 								case NORTH:
 									facing.setFacing(BlockFace.WEST);
 									break;
@@ -402,13 +483,12 @@ public class Schematic {
 				block.getLocation().getWorld().spawnParticle(Particle.CLOUD, block.getLocation(), 6);
 				block.getLocation().getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());
 				
-				current++;
+				tracker.trackCurrentBlock++;
 				
-				if(current >= locations.size() || current >= indexes.size())
-				{
+				if (tracker.trackCurrentBlock >= locations.size() || tracker.trackCurrentBlock >= indexes.size()) {
 					scheduler.cancel();
 					pasted = true;
-					current = 0;
+					tracker.trackCurrentBlock = 0;
 				}
 				
 			}, 0, time));
@@ -416,38 +496,32 @@ public class Schematic {
 			pastes.add(scheduler.getTask());
 			
 			return locations;
-		} catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		} return null;
 	}
 	
-	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview)
-	{
+	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview) {
 		return pasteSchematic(loc, paster, preview, 20);
 	}
 	
 	/**
 	 * Cancels all current instances of pasting tasks for this schematic.
 	 */
-	public void cancel()
-	{
-		for(Integer tasks : pastes)
-		{
+	public void cancel() {
+		for(Integer tasks : pastes) {
 			Bukkit.getScheduler().cancelTask(tasks);
 			pastes.remove(tasks);
 		}
 	}
 	
-	private BlockFace getDirection(Player player) 
-	{
+	private BlockFace getDirection(Player player) {
 		float yaw = player.getLocation().getYaw();
-		if(yaw < 0) 
-		{
+		if (yaw < 0) {
 			yaw += 360;
         }
 		
-		if(yaw >= 315 || yaw < 45) 
-		{
+		if (yaw >= 315 || yaw < 45) {
 			return BlockFace.SOUTH;
 		} else if(yaw < 135) {
 			return BlockFace.WEST;
@@ -457,5 +531,12 @@ public class Schematic {
 			return BlockFace.EAST;
 		} return BlockFace.NORTH;
 	}
+	
+	/**
+	 * Hacky method to avoid "final".
+	 */
+	protected class Data {
+		public int trackCurrentTile;
+		public int trackCurrentBlock;
+	}
 }
-
