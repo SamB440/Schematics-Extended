@@ -43,94 +43,41 @@ public class Schematic {
 	private JavaPlugin plugin;
 	private File schematic;
 	private List<Integer> pastes = new ArrayList<Integer>();
-	@Getter @Setter private boolean pasted;
+	/**
+	 * @deprecated this variabe is unsafe
+	 */
+	@Getter @Setter @Deprecated private boolean pasted;
+	
+	private short width = 0;
+	private short height = 0;
+	private short length = 0;
+	
+	private byte[] blockDatas;
+	
+	private Map<Vector, List<String>> signs = new HashMap<>();
+	private Map<Vector, Map<Integer, ItemStack>> chests = null;
+	private Map<Integer, BlockData> blocks = new HashMap<>();
 	
 	public Schematic(JavaPlugin plugin, File schematic) {
 		this.plugin = plugin;
 		this.schematic = schematic;
 	}
-
-	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview, int time) {
+	
+	public List<Location> pasteSchematic(Location loc, 
+			Player paster, 
+			int time, 
+			Options... option) throws SchematicNotLoadedException {
 		try {
 			
-			Data tracker = new Data();
-			
-			/*
-			 * Read the schematic file. Get the width, height, length, blocks, and block data.
-			 */
-			FileInputStream fis = new FileInputStream(schematic);
-			NBTTagCompound nbt = NBTCompressedStreamTools.a(fis);
-
-			short width = nbt.getShort("Width");
-			short height = nbt.getShort("Height");
-			short length = nbt.getShort("Length");
-
-			byte[] blockDatas = nbt.getByteArray("BlockData");
-			NBTTagCompound palette = nbt.getCompound("Palette");
-			NBTTagList tiles = (NBTTagList) nbt.get("TileEntities");
-			tracker.trackCurrentTile = 0;
-			
-			Map<Vector, List<String>> signs = new HashMap<>();
-			Map<Vector, Map<Integer, ItemStack>> chests = null;
-			Map<Integer, BlockData> blocks = new HashMap<>();
-			
-			/*
-			 * Load NBT data
-			 */
-			tiles.forEach(a -> {
-				if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
-					NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
-					
-					switch (Material.valueOf(c.getString("Id").
-							replace("minecraft:", "").
-							toUpperCase())) {
-						case SIGN: {
-							try {
-								List<String> lines = new ArrayList<>();
-								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_ONE));
-								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_TWO));
-								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_THREE));
-								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_FOUR));
-								
-								int[] pos = c.getIntArray("Pos");
-								if (!lines.isEmpty()) signs.put(new Vector(pos[0], pos[1], pos[2]), lines);
-								tiles.remove(tracker.trackCurrentTile);
-							} catch (WrongIdException e) {
-								//it wasn't a sign
-							}
-							
-							break;
-						}
-						
-						default: {
-							break;
-						}
-					}
-				} tracker.trackCurrentTile = tracker.trackCurrentTile + 1;
-			});
-			
-			try {
-				chests = NBTUtils.getItemsFromNBT(tiles);
-			} catch (WrongIdException e) {
-				//it wasn't a chest
+			if (width == 0 
+					|| height == 0 
+					|| length == 0 
+					|| blocks.isEmpty()) {
+				throw new SchematicNotLoadedException("Data has not been loaded yet");
 			}
 			
-			
-			/*
-			 * 	Explanation: 
-			 *    The "Palette" is setup like this
-			 *      "block_data": id (the ID is a Unique ID that WorldEdit gives that corresponds to an index in the BlockDatas Array)
-			 *    So I loop through all the Keys in the "Palette" Compound
-			 *    and store the custom ID and BlockData in the palette Map
-			 */
-
-			palette.getKeys().forEach(rawState -> {
-				int id = palette.getInt(rawState);
-				BlockData blockData = Bukkit.createBlockData(rawState);
-				blocks.put(id, blockData);
-			});
-
-			fis.close();
+			List<Options> options = Arrays.asList(option);
+			Data tracker = new Data();
 
 			List<Integer> indexes = new ArrayList<>();
 			List<Location> locations = new ArrayList<>();
@@ -154,16 +101,16 @@ public class Schematic {
 						//final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
 						switch (face) {
 							case NORTH:
-								location = new Location(loc.getWorld(), (x * - 1 + loc.getX()) + (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) + (int) length / 2);
+								location = new Location(loc.getWorld(), (x * - 1 + loc.getX()) + (int) width / 2, y + loc.getY(), (z + loc.getZ()) + (int) length / 2);
 								break;
 							case EAST:
-								location = new Location(loc.getWorld(), (-z + loc.getX()) - (int) length / 2, y + paster.getLocation().getY(), (-x - 1) + (width + loc.getZ()) - (int) width / 2);
+								location = new Location(loc.getWorld(), (-z + loc.getX()) - (int) length / 2, y + loc.getY(), (-x - 1) + (width + loc.getZ()) - (int) width / 2);
 								break;
 							case SOUTH:
-								location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z * - 1 + loc.getZ()) - (int) length / 2);
+								location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + loc.getY(), (z * - 1 + loc.getZ()) - (int) length / 2);
 								break;
 							case WEST:
-								location = new Location(loc.getWorld(), (z + loc.getX()) + (int) length / 2, y + paster.getLocation().getY(), (x + 1) - (width - loc.getZ()) + (int) width / 2);
+								location = new Location(loc.getWorld(), (z + loc.getX()) + (int) length / 2, y + loc.getY(), (x + 1) - (width - loc.getZ()) + (int) width / 2);
 								break;
 							default:
 								break;
@@ -308,13 +255,13 @@ public class Schematic {
 			boolean validated = true;
 			
 			for (Location validate : locations) {
-				if ((validate.getBlock().getType() != Material.AIR || validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER) || new Location(validate.getWorld(), validate.getX(), paster.getLocation().getY() - 1, validate.getZ()).getBlock().getType() == Material.AIR) {
+				if ((validate.getBlock().getType() != Material.AIR || validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER) || new Location(validate.getWorld(), validate.getX(), loc.getY() - 1, validate.getZ()).getBlock().getType() == Material.AIR) {
 					/*
 					 * Show fake block where block is interfering with schematic
 					 */
 					
 		            paster.sendBlockChange(validate.getBlock().getLocation(), Material.RED_STAINED_GLASS.createBlockData());
-		            if (!preview) {
+		            if (!options.contains(Options.PREVIEW)) {
 			            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
 			            	if(validate.getBlock().getType() == Material.AIR) paster.sendBlockChange(validate.getBlock().getLocation(), Material.AIR.createBlockData());
 			            }, 60);
@@ -327,7 +274,7 @@ public class Schematic {
 					 */
 					
 		            paster.sendBlockChange(validate.getBlock().getLocation(), Material.GREEN_STAINED_GLASS.createBlockData());
-		            if (!preview) {
+		            if (!options.contains(Options.PREVIEW)) {
 			            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
 			            	if(validate.getBlock().getType() == Material.AIR) paster.sendBlockChange(validate.getBlock().getLocation(), Material.AIR.createBlockData());
 			            }, 60);
@@ -335,7 +282,7 @@ public class Schematic {
 				}
 			}
 			
-			if (preview) return locations;
+			if (options.contains(Options.PREVIEW)) return locations;
 			if (!validated) return null;
 			
 			/*
@@ -529,7 +476,6 @@ public class Schematic {
 				
 				if (tracker.trackCurrentBlock >= locations.size() || tracker.trackCurrentBlock >= indexes.size()) {
 					scheduler.cancel();
-					pasted = true;
 					tracker.trackCurrentBlock = 0;
 				}
 				
@@ -543,13 +489,101 @@ public class Schematic {
 		} return null;
 	}
 	
-	public List<Location> pasteSchematic(Location loc, Player paster, boolean preview) {
-		return pasteSchematic(loc, paster, preview, 20);
+	public List<Location> pasteSchematic(Location loc, Player paster, Options... options) throws SchematicNotLoadedException {
+		return pasteSchematic(loc, paster, 20, options);
+	}
+	
+	public Schematic loadSchematic() {
+		
+		try {
+			Data tracker = new Data();
+			
+			/*
+			 * Read the schematic file. Get the width, height, length, blocks, and block data.
+			 */
+			
+			FileInputStream fis = new FileInputStream(schematic);
+			NBTTagCompound nbt = NBTCompressedStreamTools.a(fis);
+			
+			width = nbt.getShort("Width");
+			height = nbt.getShort("Height");
+			length = nbt.getShort("Length");
+
+			blockDatas = nbt.getByteArray("BlockData");
+			
+			NBTTagCompound palette = nbt.getCompound("Palette");
+			NBTTagList tiles = (NBTTagList) nbt.get("TileEntities");
+			tracker.trackCurrentTile = 0;
+			
+			/*
+			 * Load NBT data
+			 */
+			tiles.forEach(a -> {
+				if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
+					NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
+					
+					switch (Material.valueOf(c.getString("Id").
+							replace("minecraft:", "").
+							toUpperCase())) {
+						case SIGN: {
+							try {
+								List<String> lines = new ArrayList<>();
+								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_ONE));
+								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_TWO));
+								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_THREE));
+								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_FOUR));
+								
+								int[] pos = c.getIntArray("Pos");
+								if (!lines.isEmpty()) signs.put(new Vector(pos[0], pos[1], pos[2]), lines);
+								tiles.remove(tracker.trackCurrentTile);
+							} catch (WrongIdException e) {
+								//it wasn't a sign
+							}
+							
+							break;
+						}
+						
+						default: {
+							break;
+						}
+					}
+				} tracker.trackCurrentTile = tracker.trackCurrentTile + 1;
+			});
+			
+			try {
+				chests = NBTUtils.getItemsFromNBT(tiles);
+			} catch (WrongIdException e) {
+				//it wasn't a chest
+			}
+			
+			
+			/*
+			 * 	Explanation: 
+			 *    The "Palette" is setup like this
+			 *      "block_data": id (the ID is a Unique ID that WorldEdit gives that corresponds to an index in the BlockDatas Array)
+			 *    So I loop through all the Keys in the "Palette" Compound
+			 *    and store the custom ID and BlockData in the palette Map
+			 */
+	
+			palette.getKeys().forEach(rawState -> {
+				int id = palette.getInt(rawState);
+				BlockData blockData = Bukkit.createBlockData(rawState);
+				blocks.put(id, blockData);
+			});
+	
+			fis.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return this;
 	}
 	
 	/**
 	 * Cancels all current instances of pasting tasks for this schematic.
+	 * @deprecated this method is unsafe
 	 */
+	@Deprecated
 	public void cancel() {
 		for(Integer tasks : pastes) {
 			Bukkit.getScheduler().cancelTask(tasks);
@@ -561,7 +595,7 @@ public class Schematic {
 		float yaw = player.getLocation().getYaw();
 		if (yaw < 0) {
 			yaw += 360;
-        }
+		}
 		
 		if (yaw >= 315 || yaw < 45) {
 			return BlockFace.SOUTH;
@@ -580,5 +614,9 @@ public class Schematic {
 	protected class Data {
 		public int trackCurrentTile;
 		public int trackCurrentBlock;
+	}
+	
+	public enum Options {
+		PREVIEW
 	}
 }
