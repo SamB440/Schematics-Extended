@@ -1,5 +1,3 @@
-package net.islandearth.islandearth.utils;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -8,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.EnumUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -27,7 +26,8 @@ import org.bukkit.util.Vector;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.islandearth.islandearth.utils.NBTUtils.Position;
+import net.islandearth.civilization.schematic.nbt.NBTUtils;
+import net.islandearth.civilization.schematic.nbt.NBTUtils.Position;
 import net.minecraft.server.v1_13_R2.NBTCompressedStreamTools;
 import net.minecraft.server.v1_13_R2.NBTTagCompound;
 import net.minecraft.server.v1_13_R2.NBTTagList;
@@ -522,29 +522,31 @@ public class Schematic {
 				if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
 					NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
 					
-					switch (Material.valueOf(c.getString("Id").
-							replace("minecraft:", "").
-							toUpperCase())) {
-						case SIGN: {
-							try {
-								List<String> lines = new ArrayList<>();
-								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_ONE));
-								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_TWO));
-								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_THREE));
-								lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_FOUR));
+					if (EnumUtils.isValidEnum(Material.class, c.getString("Id"))) {
+						switch (Material.valueOf(c.getString("Id").
+								replace("minecraft:", "").
+								toUpperCase())) {
+							case SIGN: {
+								try {
+									List<String> lines = new ArrayList<>();
+									lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_ONE));
+									lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_TWO));
+									lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_THREE));
+									lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_FOUR));
+									
+									int[] pos = c.getIntArray("Pos");
+									if (!lines.isEmpty()) signs.put(new Vector(pos[0], pos[1], pos[2]), lines);
+									tiles.remove(tracker.trackCurrentTile);
+								} catch (WrongIdException e) {
+									//it wasn't a sign
+								}
 								
-								int[] pos = c.getIntArray("Pos");
-								if (!lines.isEmpty()) signs.put(new Vector(pos[0], pos[1], pos[2]), lines);
-								tiles.remove(tracker.trackCurrentTile);
-							} catch (WrongIdException e) {
-								//it wasn't a sign
+								break;
 							}
 							
-							break;
-						}
-						
-						default: {
-							break;
+							default: {
+								break;
+							}
 						}
 					}
 				} tracker.trackCurrentTile = tracker.trackCurrentTile + 1;
