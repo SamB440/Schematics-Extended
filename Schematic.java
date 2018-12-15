@@ -1,3 +1,5 @@
+package net.islandearth.civilization.schematic;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import org.bukkit.util.Vector;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.islandearth.civilization.schematic.nbt.NBTMaterial;
 import net.islandearth.civilization.schematic.nbt.NBTUtils;
 import net.islandearth.civilization.schematic.nbt.NBTUtils.Position;
 import net.minecraft.server.v1_13_R2.NBTCompressedStreamTools;
@@ -357,10 +360,8 @@ public class Schematic {
 							
 							@SuppressWarnings("unchecked")
 							Map<Integer, ItemStack> items = (Map<Integer, ItemStack>) nbtData.get(indexes.get(tracker.trackCurrentBlock));
-							System.out.println(items);
 							org.bukkit.block.Chest chest = (org.bukkit.block.Chest) block.getState();
 							for (Integer location : items.keySet()) {
-								System.out.println(location);
 								chest.getBlockInventory().setItem(location, items.get(location));
 							}
 						}
@@ -375,11 +376,21 @@ public class Schematic {
 				
 				block.getState().update(true, false);
 				
-				if (data.toString().contains("stairs") 
-                		|| data.toString().contains("ladder") 
-                		|| data.toString().contains("torch") 
-                		|| data.toString().contains("chest")
-                		|| data.toString().contains("sign")) {
+				List<Material> validData = new ArrayList<>();
+				validData.add(Material.LADDER);
+				validData.add(Material.TORCH);
+				validData.add(Material.CHEST);
+				validData.add(Material.SIGN);
+				
+				for (Material material : org.bukkit.Tag.BANNERS.getValues()) {
+					validData.add(material);
+				}
+				
+				for (Material material : org.bukkit.Tag.STAIRS.getValues()) {
+					validData.add(material);
+				}
+				
+				if (validData.contains(data.getMaterial())) {
 					Directional facing = (Directional) block.getState().getBlockData();
 					switch (face) {
 						case NORTH:
@@ -522,8 +533,8 @@ public class Schematic {
 				if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
 					NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
 					
-					if (EnumUtils.isValidEnum(Material.class, c.getString("Id"))) {
-						switch (Material.valueOf(c.getString("Id").
+					if (EnumUtils.isValidEnum(NBTMaterial.class, c.getString("Id"))) {
+						switch (NBTMaterial.valueOf(c.getString("Id").
 								replace("minecraft:", "").
 								toUpperCase())) {
 							case SIGN: {
@@ -541,6 +552,11 @@ public class Schematic {
 									//it wasn't a sign
 								}
 								
+								break;
+							}
+							
+							case BANNER: {
+								//no more data to pull
 								break;
 							}
 							
