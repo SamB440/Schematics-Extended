@@ -27,7 +27,7 @@ public class BuildTask implements Runnable {
 		{
 			if(plugin.getPlayerManagement().isBuilding(player.getUniqueId()))
 			{
-				List<Location> locations = plugin.getPlayerManagement().getBuilding(player.getUniqueId()).pasteSchematic(player.getTargetBlock(null, 7).getLocation().add(0, 1, 0), player, true);
+				List<Location> locations = plugin.getPlayerManagement().getBuilding(player.getUniqueId()).pasteSchematic(player.getTargetBlock(null, 7).getLocation().add(0, 1, 0), player, Options.PREVIEW);
 				Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
 					if(cache.containsKey(player))
 					{
