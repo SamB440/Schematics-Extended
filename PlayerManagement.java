@@ -1,38 +1,27 @@
 /**
  * @author SamB440
  */
+@RequiredArgsConstructor
 public class PlayerManagement {
 	
+	@NonNull
 	private JavaPlugin plugin;
 	
-	HashMap<UUID, Boolean> building = new HashMap<UUID, Boolean>();
-	HashMap<UUID, String> current = new HashMap<UUID, String>();
+	private Map<UUID, Schematic> building = new HashMap<>();
 	
-	public PlayerManagement(JavaPlugin plugin)
-	{
-		this.plugin = plugin;
-	}
-	
-	public void setBuilding(UUID uuid, boolean val, String name)
-	{
-		if(!building.containsKey(uuid)) 
-		{
+	public void setBuilding(UUID uuid, Schematic schematic) {
+		if (!building.containsKey(uuid)) {
 			building.put(uuid, val);
-		} else building.replace(uuid, val);
-		
-		if(!current.containsKey(uuid)) 
-		{
-			current.put(uuid, name);
-		} else current.replace(uuid, name);
+		} else {
+		    building.replace(uuid, val);
+		}
 	}
 	
-	public boolean isBuilding(UUID uuid)
-	{
+	public boolean isBuilding(UUID uuid) {
+		return building.containsKey(uuid);
+	}
+	
+	public Schematic getBuilding(UUID uuid) {
 		return building.get(uuid);
-	}
-	
-	public Schematic getBuilding(UUID uuid)
-	{
-		return new Schematic(plugin, new File(plugin.getDataFolder() + "/schematics/" + current.get(uuid) + ".schematic"));
 	}
 }
