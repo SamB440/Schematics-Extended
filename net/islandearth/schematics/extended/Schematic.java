@@ -156,7 +156,6 @@ public class Schematic {
 	 * @param location - location to paste from
 	 * @param paster - player pasting
 	 * @param time - time in ticks to paste blocks
-	 * @param effectPlay - callback when an effect can be played
 	 * @param options - options to apply to this paste
 	 * @return list of locations where schematic blocks will be pasted, null if schematic locations will replace blocks
 	 * @throws SchematicNotLoadedException
@@ -313,6 +312,37 @@ public class Schematic {
 			validData.add(Material.TORCH);
 			validData.add(Material.CHEST);
 			validData.add(Material.SIGN);
+			validData.add(Material.BLACK_STAINED_GLASS_PANE);
+			validData.add(Material.BLUE_STAINED_GLASS_PANE);
+			validData.add(Material.BROWN_STAINED_GLASS_PANE);
+			validData.add(Material.CYAN_STAINED_GLASS_PANE);
+			validData.add(Material.GLASS_PANE);
+			validData.add(Material.WHITE_STAINED_GLASS_PANE);
+			validData.add(Material.GREEN_STAINED_GLASS_PANE);
+			validData.add(Material.GRAY_STAINED_GLASS_PANE);
+			validData.add(Material.LIGHT_BLUE_STAINED_GLASS_PANE);
+			validData.add(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+			validData.add(Material.LIME_STAINED_GLASS_PANE);
+			validData.add(Material.MAGENTA_STAINED_GLASS_PANE);
+			validData.add(Material.ORANGE_STAINED_GLASS_PANE);
+			validData.add(Material.PINK_STAINED_GLASS_PANE);
+			validData.add(Material.PURPLE_STAINED_GLASS_PANE);
+			validData.add(Material.RED_STAINED_GLASS_PANE);
+			validData.add(Material.YELLOW_STAINED_GLASS_PANE);
+			validData.add(Material.COBBLESTONE_WALL);
+			validData.add(Material.ACACIA_FENCE);
+			validData.add(Material.ACACIA_FENCE_GATE);
+			validData.add(Material.BIRCH_FENCE);
+			validData.add(Material.BIRCH_FENCE_GATE);
+			validData.add(Material.DARK_OAK_FENCE);
+			validData.add(Material.DARK_OAK_FENCE_GATE);
+			validData.add(Material.JUNGLE_FENCE);
+			validData.add(Material.JUNGLE_FENCE_GATE);
+			validData.add(Material.NETHER_BRICK_FENCE);
+			validData.add(Material.OAK_FENCE);
+			validData.add(Material.OAK_FENCE_GATE);
+			validData.add(Material.SPRUCE_FENCE);
+			validData.add(Material.SPRUCE_FENCE_GATE);
 			
 			for (Material material : org.bukkit.Tag.BANNERS.getValues()) {
 				validData.add(material);
@@ -551,7 +581,7 @@ public class Schematic {
 			blockDatas = nbt.getByteArray("BlockData");
 			
 			NBTTagCompound palette = nbt.getCompound("Palette");
-			NBTTagList tiles = (NBTTagList) nbt.get("TileEntities");
+			NBTTagList tiles = (NBTTagList) nbt.get("BlockEntities");
 			tracker.trackCurrentTile = 0;
 			
 			/*
@@ -626,7 +656,7 @@ public class Schematic {
 	
 	/**
 	 * @param player
-	 * @return blockface of cardinal direction player is facing
+	 * @return blockface of Damocles direction player is facing
 	 */
 	private BlockFace getDirection(Player player) {
 		float yaw = player.getLocation().getYaw();
