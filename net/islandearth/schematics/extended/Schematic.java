@@ -656,7 +656,7 @@ public class Schematic {
 	
 	/**
 	 * @param player
-	 * @return blockface of Damocles direction player is facing
+	 * @return blockface of cardinal direction player is facing
 	 */
 	private BlockFace getDirection(Player player) {
 		float yaw = player.getLocation().getYaw();
