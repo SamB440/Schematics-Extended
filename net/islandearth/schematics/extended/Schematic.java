@@ -16,9 +16,11 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.Fence;
 import org.bukkit.block.data.type.Sign;
 import org.bukkit.block.data.type.WallSign;
 import org.bukkit.entity.Player;
@@ -37,7 +39,7 @@ import net.minecraft.server.v1_13_R2.NBTTagList;
  * <br></br>
  * <b>License:</b> 
  * 	<a href="https://gitlab.com/SamB440/Schematics-Extended/blob/master/LICENSE">https://gitlab.com/SamB440/Schematics-Extended/blob/master/LICENSE</a>
- * @version 2.0.2
+ * @version 2.0.3
  * @author SamB440 - Schematic previews, centering and pasting block-by-block, class itself
  * @author brainsynder - 1.13 Palette Schematic Reader
  * @author Math0424 - Rotation calculations
@@ -61,8 +63,8 @@ public class Schematic {
 	private List<Material> delayedBlocks;
 	
 	/**
-	 * @param plugin - your plugin instance
-	 * @param schematic - file to the schematic
+	 * @param plugin your plugin instance
+	 * @param schematic file to the schematic
 	 */
 	public Schematic(SchematicPlugin plugin, File schematic) {
 		this.plugin = plugin;
@@ -148,15 +150,42 @@ public class Schematic {
 				Material.POTATOES,
 				Material.PUMPKIN,
 				Material.PUMPKIN_STEM,
-				Material.PUMPKIN_SEEDS);
+				Material.PUMPKIN_SEEDS,
+				Material.TORCH,
+				Material.RAIL,
+				Material.ACTIVATOR_RAIL,
+				Material.DETECTOR_RAIL,
+				Material.POWERED_RAIL,
+				
+				Material.ACACIA_FENCE,
+				Material.ACACIA_FENCE_GATE,
+				Material.BIRCH_FENCE,
+				Material.BIRCH_FENCE_GATE,
+				Material.DARK_OAK_FENCE,
+				Material.DARK_OAK_FENCE_GATE,
+				Material.JUNGLE_FENCE,
+				Material.JUNGLE_FENCE_GATE,
+				Material.NETHER_BRICK_FENCE,
+				Material.OAK_FENCE,
+				Material.OAK_FENCE_GATE,
+				Material.SPRUCE_FENCE,
+				Material.SPRUCE_FENCE_GATE,
+				
+				Material.OAK_DOOR,
+				Material.ACACIA_DOOR,
+				Material.BIRCH_DOOR,
+				Material.DARK_OAK_DOOR,
+				Material.JUNGLE_DOOR,
+				Material.SPRUCE_DOOR,
+				Material.IRON_DOOR);
 	}
 	
 	/**
 	 * Pastes a schematic, with a specified time
-	 * @param location - location to paste from
-	 * @param paster - player pasting
-	 * @param time - time in ticks to paste blocks
-	 * @param options - options to apply to this paste
+	 * @param location location to paste from
+	 * @param paster player pasting
+	 * @param time time in ticks to paste blocks
+	 * @param options options to apply to this paste
 	 * @return list of locations where schematic blocks will be pasted, null if schematic locations will replace blocks
 	 * @throws SchematicNotLoadedException
 	 */
@@ -300,6 +329,10 @@ public class Schematic {
 			 * ---------------------------
 			 */
 			
+			if (options.contains(Options.REALISTIC)) {
+				//TODO
+			}
+			
 			/*
 			 * Start pasting each block every tick
 			 */
@@ -330,19 +363,8 @@ public class Schematic {
 			validData.add(Material.RED_STAINED_GLASS_PANE);
 			validData.add(Material.YELLOW_STAINED_GLASS_PANE);
 			validData.add(Material.COBBLESTONE_WALL);
-			validData.add(Material.ACACIA_FENCE);
-			validData.add(Material.ACACIA_FENCE_GATE);
-			validData.add(Material.BIRCH_FENCE);
-			validData.add(Material.BIRCH_FENCE_GATE);
-			validData.add(Material.DARK_OAK_FENCE);
-			validData.add(Material.DARK_OAK_FENCE_GATE);
-			validData.add(Material.JUNGLE_FENCE);
-			validData.add(Material.JUNGLE_FENCE_GATE);
-			validData.add(Material.NETHER_BRICK_FENCE);
-			validData.add(Material.OAK_FENCE);
-			validData.add(Material.OAK_FENCE_GATE);
-			validData.add(Material.SPRUCE_FENCE);
-			validData.add(Material.SPRUCE_FENCE_GATE);
+			validData.add(Material.TORCH);
+			ExtraTags.FENCE_GATES.getMaterials().forEach(mat -> validData.add(mat));
 			
 			for (Material material : org.bukkit.Tag.BANNERS.getValues()) {
 				validData.add(material);
@@ -350,6 +372,18 @@ public class Schematic {
 			
 			for (Material material : org.bukkit.Tag.STAIRS.getValues()) {
 				validData.add(material);
+			}
+			
+			/*
+			 * List of block faces to update *after* the schematic is done pasting.
+			 */
+			List<Block> toUpdate = new ArrayList<>();
+			for (int i = 0; i < locations.size(); i++) {
+				Block block = locations.get(i).getBlock();
+				BlockData data = blocks.get((int) blockDatas[indexes.get(i)]);
+				if (ExtraTags.FENCES.getMaterials().contains(data.getMaterial())) {
+					toUpdate.add(block);
+				}
 			}
 			
 			scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
@@ -527,10 +561,34 @@ public class Schematic {
 				if (tracker.trackCurrentBlock >= locations.size() || tracker.trackCurrentBlock >= indexes.size()) {
 					scheduler.cancel();
 					tracker.trackCurrentBlock = 0;
+					toUpdate.forEach(b -> {
+						BlockState state = b.getState();
+						Fence fence = (Fence) state.getBlockData();
+						for (BlockFace bf : BlockFace.values()) {
+							Block rel = b.getRelative(bf);
+							if (!fence.getAllowedFaces().contains(bf)) continue;
+							if (rel.getType() == Material.AIR
+									|| rel.getType().toString().contains("SLAB")
+									|| rel.getType().toString().contains("STAIRS")) {
+								if (fence.hasFace(bf)) fence.setFace(bf, false);
+							} else {
+								if (!rel.getType().toString().contains("SLAB") 
+									&& !rel.getType().toString().contains("STAIRS") 
+									&& !ExtraTags.ANVILS.getMaterials().contains(rel.getType())
+									&& rel.getType().isSolid()
+									&& rel.getType().isBlock()) {
+									if (!fence.hasFace(bf)) fence.setFace(bf, true);
+								}
+							}
+						}
+						
+						state.setBlockData(fence);
+						state.update(true, false);
+					});
+					
+					toUpdate.forEach(b -> b.getState().update(true, false));
 				}
-				
 			}, 0, time));
-			
 			return locations;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -539,9 +597,9 @@ public class Schematic {
 	
 	/**
 	 * Pastes a schematic, with the time defaulting to 1 block per second
-	 * @param location - location to paste from
-	 * @param paster - player pasting
-	 * @param options - options to apply to this paste
+	 * @param location location to paste from
+	 * @param paster player pasting
+	 * @param options options to apply to this paste
 	 * @return list of locations where schematic blocks will be pasted, null if schematic locations will replace blocks
 	 * @throws SchematicNotLoadedException
 	 */
@@ -551,7 +609,7 @@ public class Schematic {
 	
 	/**
 	 * Creates a constant preview of this schematic for the player
-	 * @param player - player
+	 * @param player player
 	 */
 	public void previewSchematic(Player player) {
 		plugin.getPlayerManagement().setBuilding(player.getUniqueId(), this);
@@ -560,7 +618,7 @@ public class Schematic {
 	
 	/**
 	 * Loads the schematic file. This should <b>always</b> be used before pasting a schematic.
-	 * @return schematic
+	 * @return schematic (self)
 	 */
 	public Schematic loadSchematic() {
 		
@@ -687,6 +745,15 @@ public class Schematic {
 	 * An enum of options to apply whilst previewing/pasting a schematic.
 	 */
 	public enum Options {
-		PREVIEW
+		/**
+		 * Previews schematic
+		 */
+		PREVIEW,
+		/**
+		 * A realistic building method. Builds from the ground up, instead of in the default slices.
+		 * <hr></hr>
+		 * <b>*WIP, CURRENTLY DOES NOTHING*</b>
+		 */
+		REALISTIC
 	}
 }
