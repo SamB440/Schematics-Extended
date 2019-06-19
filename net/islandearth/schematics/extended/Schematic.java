@@ -362,7 +362,6 @@ public class Schematic {
 			validData.add(Material.PURPLE_STAINED_GLASS_PANE);
 			validData.add(Material.RED_STAINED_GLASS_PANE);
 			validData.add(Material.YELLOW_STAINED_GLASS_PANE);
-			validData.add(Material.COBBLESTONE_WALL);
 			validData.add(Material.TORCH);
 			ExtraTags.FENCE_GATES.getMaterials().forEach(mat -> validData.add(mat));
 			
@@ -563,27 +562,29 @@ public class Schematic {
 					tracker.trackCurrentBlock = 0;
 					toUpdate.forEach(b -> {
 						BlockState state = b.getState();
-						Fence fence = (Fence) state.getBlockData();
-						for (BlockFace bf : BlockFace.values()) {
-							Block rel = b.getRelative(bf);
-							if (!fence.getAllowedFaces().contains(bf)) continue;
-							if (rel.getType() == Material.AIR
-									|| rel.getType().toString().contains("SLAB")
-									|| rel.getType().toString().contains("STAIRS")) {
-								if (fence.hasFace(bf)) fence.setFace(bf, false);
-							} else {
-								if (!rel.getType().toString().contains("SLAB") 
-									&& !rel.getType().toString().contains("STAIRS") 
-									&& !ExtraTags.ANVILS.getMaterials().contains(rel.getType())
-									&& rel.getType().isSolid()
-									&& rel.getType().isBlock()) {
-									if (!fence.hasFace(bf)) fence.setFace(bf, true);
+						if (ExtraTags.FENCES.getMaterials().contains(b.getType())) {
+							Fence fence = (Fence) state.getBlockData();
+							for (BlockFace bf : BlockFace.values()) {
+								Block rel = b.getRelative(bf);
+								if (!fence.getAllowedFaces().contains(bf)) continue;
+								if (rel.getType() == Material.AIR
+										|| rel.getType().toString().contains("SLAB")
+										|| rel.getType().toString().contains("STAIRS")) {
+									if (fence.hasFace(bf)) fence.setFace(bf, false);
+								} else {
+									if (!rel.getType().toString().contains("SLAB") 
+										&& !rel.getType().toString().contains("STAIRS") 
+										&& !ExtraTags.ANVILS.getMaterials().contains(rel.getType())
+										&& rel.getType().isSolid()
+										&& rel.getType().isBlock()) {
+										if (!fence.hasFace(bf)) fence.setFace(bf, true);
+									}
 								}
 							}
+							
+							state.setBlockData(fence);
+							state.update(true, false);
 						}
-						
-						state.setBlockData(fence);
-						state.update(true, false);
 					});
 					
 					toUpdate.forEach(b -> b.getState().update(true, false));
