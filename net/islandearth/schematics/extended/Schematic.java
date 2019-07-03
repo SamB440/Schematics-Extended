@@ -660,7 +660,9 @@ public class Schematic {
 				if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
 					NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
 					
-					if (EnumUtils.isValidEnum(NBTMaterial.class, c.getString("Id"))) {
+					if (EnumUtils.isValidEnum(NBTMaterial.class, c.getString("Id").
+							replace("minecraft:", "").
+							toUpperCase())) {
 						switch (NBTMaterial.valueOf(c.getString("Id").
 								replace("minecraft:", "").
 								toUpperCase())) {
