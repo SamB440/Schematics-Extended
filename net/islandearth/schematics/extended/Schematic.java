@@ -8,12 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.EnumUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -23,6 +23,7 @@ import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Fence;
 import org.bukkit.block.data.type.Sign;
 import org.bukkit.block.data.type.WallSign;
+import org.bukkit.craftbukkit.libs.org.apache.commons.lang3.EnumUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -30,9 +31,9 @@ import org.bukkit.util.Vector;
 import net.islandearth.schematics.extended.NBTUtils.Position;
 import net.islandearth.schematics.extended.example.BuildTask;
 import net.islandearth.schematics.extended.example.SchematicPlugin;
-import net.minecraft.server.v1_13_R2.NBTCompressedStreamTools;
-import net.minecraft.server.v1_13_R2.NBTTagCompound;
-import net.minecraft.server.v1_13_R2.NBTTagList;
+import net.minecraft.server.v1_14_R1.NBTCompressedStreamTools;
+import net.minecraft.server.v1_14_R1.NBTTagCompound;
+import net.minecraft.server.v1_14_R1.NBTTagList;
 
 /**
  * A utility class that previews and pastes schematics block-by-block with asynchronous support.
@@ -344,7 +345,6 @@ public class Schematic {
 			validData.add(Material.LADDER);
 			validData.add(Material.TORCH);
 			validData.add(Material.CHEST);
-			validData.add(Material.SIGN);
 			validData.add(Material.BLACK_STAINED_GLASS_PANE);
 			validData.add(Material.BLUE_STAINED_GLASS_PANE);
 			validData.add(Material.BROWN_STAINED_GLASS_PANE);
@@ -364,6 +364,7 @@ public class Schematic {
 			validData.add(Material.YELLOW_STAINED_GLASS_PANE);
 			validData.add(Material.TORCH);
 			ExtraTags.FENCE_GATES.getMaterials().forEach(mat -> validData.add(mat));
+			Tag.SIGNS.getValues().forEach(mat -> validData.add(mat));
 			
 			for (Material material : org.bukkit.Tag.BANNERS.getValues()) {
 				validData.add(material);
@@ -395,9 +396,13 @@ public class Schematic {
 				BlockData data = blocks.get((int) blockDatas[indexes.get(tracker.trackCurrentBlock)]);
 				block.setType(data.getMaterial());
 				block.setBlockData(data);
-				
 				switch (data.getMaterial()) {
-					case SIGN: {
+					case SPRUCE_SIGN:
+					case DARK_OAK_SIGN:
+					case ACACIA_SIGN:
+					case BIRCH_SIGN:
+					case JUNGLE_SIGN:
+					case OAK_SIGN: {
 						Sign signData = (Sign) data;
 						block.setBlockData(signData);
 						
@@ -417,7 +422,12 @@ public class Schematic {
 						break;
 					}
 					
-					case WALL_SIGN: {
+					case SPRUCE_WALL_SIGN:
+					case DARK_OAK_WALL_SIGN:
+					case ACACIA_WALL_SIGN:
+					case BIRCH_WALL_SIGN:
+					case JUNGLE_WALL_SIGN:
+					case OAK_WALL_SIGN: {
 						WallSign signData = (WallSign) data;
 						block.setBlockData(signData);
 						
