@@ -12,8 +12,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import lombok.Getter;
-import net.minecraft.server.v1_13_R2.NBTTagCompound;
-import net.minecraft.server.v1_13_R2.NBTTagList;
+import net.minecraft.server.v1_14_R1.NBTTagCompound;
+import net.minecraft.server.v1_14_R1.NBTTagList;
 
 /**
  * Utility class to get extra data from NBT
@@ -28,7 +28,7 @@ public class NBTUtils {
 	 * @throws WrongIdException
 	 */
 	public static String getSignLineFromNBT(NBTTagCompound c, Position position) throws WrongIdException {
-		if (c.getString("Id").equals("minecraft:sign")) {
+		if (c.getString("Id").contains("sign")) {
 			String s1 = c.getString(position.getId());
 			JsonObject jobj = new Gson().fromJson(s1, JsonObject.class);
 			if (jobj.get("extra") != null) {
@@ -41,7 +41,7 @@ public class NBTUtils {
 	}
 	
 	/**
-	 * @param l - tileentities
+	 * @param l - blockentities
 	 * @return a map, with the key as the vector, and the value as a second map with the key as the slot and the value as the item
 	 * @throws WrongIdException
 	 */
