@@ -28,7 +28,7 @@ public class NBTUtils {
 	 * @throws WrongIdException
 	 */
 	public static String getSignLineFromNBT(NBTTagCompound c, Position position) throws WrongIdException {
-		if (c.getString("Id").contains("sign")) {
+		if (c.getString("Id").equals("minecraft:sign")) {
 			String s1 = c.getString(position.getId());
 			JsonObject jobj = new Gson().fromJson(s1, JsonObject.class);
 			if (jobj.get("extra") != null) {
