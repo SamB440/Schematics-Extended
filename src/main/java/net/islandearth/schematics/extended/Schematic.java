@@ -3,10 +3,15 @@ package net.islandearth.schematics.extended;
 import net.islandearth.schematics.extended.NBTUtils.Position;
 import net.islandearth.schematics.extended.example.BuildTask;
 import net.islandearth.schematics.extended.example.SchematicPlugin;
-import net.minecraft.server.v1_14_R1.NBTCompressedStreamTools;
-import net.minecraft.server.v1_14_R1.NBTTagCompound;
-import net.minecraft.server.v1_14_R1.NBTTagList;
-import org.bukkit.*;
+import net.minecraft.server.v1_15_R1.NBTCompressedStreamTools;
+import net.minecraft.server.v1_15_R1.NBTTagCompound;
+import net.minecraft.server.v1_15_R1.NBTTagList;
+import org.bukkit.Bukkit;
+import org.bukkit.Effect;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -23,7 +28,11 @@ import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A utility class that previews and pastes schematics block-by-block with asynchronous support.
@@ -638,51 +647,53 @@ public class Schematic {
 			/*
 			 * Load NBT data
 			 */
-			tiles.forEach(a -> {
-				if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
-					NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
-					
-					if (EnumUtils.isValidEnum(NBTMaterial.class, c.getString("Id").
-							replace("minecraft:", "").
-							toUpperCase())) {
-						switch (NBTMaterial.valueOf(c.getString("Id").
+			if (tiles != null) {
+				tiles.forEach(a -> {
+					if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
+						NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
+
+						if (EnumUtils.isValidEnum(NBTMaterial.class, c.getString("Id").
 								replace("minecraft:", "").
 								toUpperCase())) {
-							case SIGN: {
-								try {
-									List<String> lines = new ArrayList<>();
-									lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_ONE));
-									lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_TWO));
-									lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_THREE));
-									lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_FOUR));
-									
-									int[] pos = c.getIntArray("Pos");
-									if (!lines.isEmpty()) signs.put(new Vector(pos[0], pos[1], pos[2]), lines);
-									tiles.remove(tracker.trackCurrentTile);
-								} catch (WrongIdException e) {
-									//it wasn't a sign
+							switch (NBTMaterial.valueOf(c.getString("Id").
+									replace("minecraft:", "").
+									toUpperCase())) {
+								case SIGN: {
+									try {
+										List<String> lines = new ArrayList<>();
+										lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_ONE));
+										lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_TWO));
+										lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_THREE));
+										lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_FOUR));
+
+										int[] pos = c.getIntArray("Pos");
+										if (!lines.isEmpty()) signs.put(new Vector(pos[0], pos[1], pos[2]), lines);
+										tiles.remove(tracker.trackCurrentTile);
+									} catch (WrongIdException e) {
+										//it wasn't a sign
+									}
+
+									break;
 								}
-								
-								break;
-							}
 
-							//no more data to pull
+								//no more data to pull
 
-							default: {
-								break;
+								default: {
+									break;
+								}
 							}
 						}
 					}
-				} tracker.trackCurrentTile = tracker.trackCurrentTile + 1;
-			});
-			
-			try {
-				chests = NBTUtils.getItemsFromNBT(tiles);
-			} catch (WrongIdException e) {
-				//it wasn't a chest
+					tracker.trackCurrentTile = tracker.trackCurrentTile + 1;
+				});
+
+				try {
+					chests = NBTUtils.getItemsFromNBT(tiles);
+				} catch (WrongIdException e) {
+					//it wasn't a chest
+				}
 			}
-			
-			
+
 			/*
 			 * 	Explanation: 
 			 *    The "Palette" is setup like this
@@ -728,7 +739,7 @@ public class Schematic {
 	/**
 	 * Hacky method to avoid "final".
 	 */
-	protected class Data {
+	protected static class Data {
 		int trackCurrentTile;
 		int trackCurrentBlock;
 	}
