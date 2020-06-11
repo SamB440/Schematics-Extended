@@ -1,6 +1,6 @@
 name: SchematicsExtended
 version: @version@
-main: net.islandearth.schematicsextended.SchematicsExtended
+main: net.islandearth.schematics.extended.example.SchematicPlugin
 api-version: 1.15
 load: STARTUP
 authors: [SamB440, brainsynder, Math0424]

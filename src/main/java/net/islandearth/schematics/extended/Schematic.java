@@ -69,7 +69,8 @@ public class Schematic {
 	public Schematic(SchematicPlugin plugin, File schematic) {
 		this.plugin = plugin;
 		this.schematic = schematic;
-		this.delayedBlocks = Arrays.asList(Material.LAVA, 
+		this.delayedBlocks = Arrays.asList(Material.LAVA,
+				Material.VINE,
 				Material.WATER,
 				Material.GRASS,
 				Material.ARMOR_STAND,
@@ -212,30 +213,31 @@ public class Schematic {
 			Map<Integer, Object> nbtData = new HashMap<>();
 			
 			BlockFace face = getDirection(paster);
-	   
+
 			/*
 			 * Loop through all the blocks within schematic size.
 			 */
-			for(int x = 0; x < width; ++x) {
-				for(int y = 0; y < height; ++y) {
-					for(int z = 0; z < length; ++z) {
+			for (int x = 0; x < width; ++x) {
+				for (int y = 0; y < height; ++y) {
+					for (int z = 0; z < length; ++z) {
 						int index = y * width * length + z * width + x;
 						Vector point = new Vector(x, y, z);
 						Location location = null;
-						
+						int width2 = width / 2;
+						int length2 = length / 2;
 						//final Location location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + paster.getLocation().getY(), (z + loc.getZ()) - (int) length / 2);
 						switch (face) {
 							case NORTH:
-								location = new Location(loc.getWorld(), (x * - 1 + loc.getX()) + (int) width / 2, y + loc.getY(), (z + loc.getZ()) + (int) length / 2);
+								location = new Location(loc.getWorld(), (x * - 1 + loc.getBlockX()) + width2, y + loc.getBlockY(), (z + loc.getBlockZ()) + length2);
 								break;
 							case EAST:
-								location = new Location(loc.getWorld(), (-z + loc.getX()) - (int) length / 2, y + loc.getY(), (-x - 1) + (width + loc.getZ()) - (int) width / 2);
+								location = new Location(loc.getWorld(), (-z + loc.getBlockX()) - length2, y + loc.getBlockY(), (-x - 1) + (width + loc.getBlockZ()) - width2);
 								break;
 							case SOUTH:
-								location = new Location(loc.getWorld(), (x + loc.getX()) - (int) width / 2, y + loc.getY(), (z * - 1 + loc.getZ()) - (int) length / 2);
+								location = new Location(loc.getWorld(), (x + loc.getBlockX()) - width2, y + loc.getBlockY(), (z * - 1 + loc.getBlockZ()) - length2);
 								break;
 							case WEST:
-								location = new Location(loc.getWorld(), (z + loc.getX()) + (int) length / 2, y + loc.getY(), (x + 1) - (width - loc.getZ()) + (int) width / 2);
+								location = new Location(loc.getWorld(), (z + loc.getBlockX()) + length2, y + loc.getBlockY(), (x + 1) - (width - loc.getBlockZ()) + width2);
 								break;
 							default:
 								break;
@@ -276,22 +278,18 @@ public class Schematic {
 			 */
 
 			indexes.addAll(otherindex);
-			
 			otherindex.clear();
-
 			locations.addAll(otherloc);
-			
 			otherloc.clear();
-			
+
 			/*
-			 * ---------------------------
-			 * Delete this section of code if you want schematics to be pasted anywhere
+			 * Verify location of pasting
 			 */
 			
 			boolean validated = true;
 			
 			for (Location validate : locations) {
-				if ((validate.getBlock().getType() != Material.AIR || validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER) || new Location(validate.getWorld(), validate.getX(), loc.getY() - 1, validate.getZ()).getBlock().getType() == Material.AIR) {
+				if (!options.contains(Options.PLACE_ANYWHERE) && (validate.getBlock().getType() != Material.AIR || validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER) || new Location(validate.getWorld(), validate.getX(), loc.getY() - 1, validate.getZ()).getBlock().getType() == Material.AIR) {
 					/*
 					 * Show fake block where block is interfering with schematic
 					 */
@@ -316,13 +314,9 @@ public class Schematic {
 		            }
 				}
 			}
-			
+
 			if (options.contains(Options.PREVIEW)) return locations;
 			if (!validated) return null;
-			
-			/*
-			 * ---------------------------
-			 */
 			
 			if (options.contains(Options.REALISTIC)) {
 				//TODO
@@ -359,9 +353,7 @@ public class Schematic {
 			validData.add(Material.TORCH);
 			validData.addAll(ExtraTags.FENCE_GATES.getMaterials());
 			validData.addAll(Tag.SIGNS.getValues());
-
 			validData.addAll(Tag.BANNERS.getValues());
-
 			validData.addAll(Tag.STAIRS.getValues());
 			
 			/*
@@ -574,7 +566,7 @@ public class Schematic {
 								} else {
 									if (!rel.getType().toString().contains("SLAB") 
 										&& !rel.getType().toString().contains("STAIRS") 
-										&& !ExtraTags.ANVILS.getMaterials().contains(rel.getType())
+										&& !Tag.ANVIL.getValues().contains(rel.getType())
 										&& rel.getType().isSolid()
 										&& rel.getType().isBlock()) {
 										if (!fence.hasFace(bf)) fence.setFace(bf, true);
@@ -727,11 +719,11 @@ public class Schematic {
 		
 		if (yaw >= 315 || yaw < 45) {
 			return BlockFace.SOUTH;
-		} else if(yaw < 135) {
+		} else if (yaw < 135) {
 			return BlockFace.WEST;
-		} else if(yaw < 225) {
+		} else if (yaw < 225) {
 			return BlockFace.NORTH;
-		} else if(yaw < 315) {
+		} else if (yaw < 315) {
 			return BlockFace.EAST;
 		} return BlockFace.NORTH;
 	}
@@ -756,7 +748,13 @@ public class Schematic {
 		 * A realistic building method. Builds from the ground up, instead of in the default slices.
 		 * <hr></hr>
 		 * <b>*WIP, CURRENTLY DOES NOTHING*</b>
+		 * @deprecated does nothing
 		 */
-		REALISTIC
+		@Deprecated
+		REALISTIC,
+		/**
+		 * Bypasses the verification check and allows placing anywhere.
+		 */
+		PLACE_ANYWHERE
 	}
 }

@@ -41,7 +41,7 @@ public class BuildTask {
 				Schematic schematic = pm.getBuilding(player.getUniqueId());
 				player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder(ChatColor.RED + "Left Click to cancel" + ChatColor.GRAY + " : " + ChatColor.GREEN + "Right Click to place").create());
 				try {
-					List<Location> locations = schematic.pasteSchematic(player.getTargetBlock(null, 10).getLocation().add(0, 1, 0), player, Options.PREVIEW);
+					List<Location> locations = schematic.pasteSchematic(player.getTargetBlock(null, 10).getLocation().add(0, 1, 0), player, Options.PREVIEW, Options.PLACE_ANYWHERE);
 					Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
 						if (cache.containsKey(player)) {
 							if (!cache.get(player).equals(locations)) {

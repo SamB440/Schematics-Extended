@@ -3,7 +3,11 @@ package net.islandearth.schematics.extended.example;
 import net.islandearth.schematics.extended.Scheduler;
 import net.islandearth.schematics.extended.Schematic;
 import net.islandearth.schematics.extended.SchematicNotLoadedException;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,7 +36,7 @@ public class SchematicListener implements Listener {
 				case RIGHT_CLICK_AIR:
 				case RIGHT_CLICK_BLOCK:
 					try {
-						List<Location> locations = plugin.getPlayerManagement().getBuilding(player.getUniqueId()).pasteSchematic(player.getTargetBlock(null, 10).getLocation().add(0, 1, 0), player);
+						List<Location> locations = plugin.getPlayerManagement().getBuilding(player.getUniqueId()).pasteSchematic(player.getTargetBlock(null, 10).getLocation().add(0, 1, 0), player, 5);
 						player.sendMessage(ChatColor.GREEN + "You are now building the schematic; " + plugin.getPlayerManagement().getBuilding(player.getUniqueId()) + "!");
 						if (locations != null) {
 							Scheduler scheduler = new Scheduler();
@@ -69,11 +73,11 @@ public class SchematicListener implements Listener {
 	@EventHandler
 	public void onJoin(PlayerJoinEvent pje) {
 		Player player = pje.getPlayer();
-		File file = new File(plugin.getDataFolder() + "/schematics/example.schematic");
+		File file = new File(plugin.getDataFolder() + "/schematics/example.schem");
 		if (!file.exists()) {
 			player.sendMessage(ChatColor.RED + "Not creating schematic preview since example file does not exist!");
 		} else {
-			new Schematic(plugin, new File(plugin.getDataFolder() + "/schematics/example.schematic"))
+			new Schematic(plugin, new File(plugin.getDataFolder() + "/schematics/example.schem"))
 				.loadSchematic()
 				.previewSchematic(player);
 			player.sendMessage(ChatColor.GREEN + "Now previewing schematic!");
