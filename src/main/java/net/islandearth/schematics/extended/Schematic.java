@@ -1,6 +1,6 @@
 package net.islandearth.schematics.extended;
 
-import net.islandearth.schematics.extended.NBTUtils.Position;
+import net.islandearth.schematics.extended.block.NBTSignBlock;
 import net.islandearth.schematics.extended.example.BuildTask;
 import net.islandearth.schematics.extended.example.SchematicPlugin;
 import net.minecraft.server.v1_16_R2.NBTCompressedStreamTools;
@@ -21,7 +21,6 @@ import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Fence;
 import org.bukkit.block.data.type.Sign;
 import org.bukkit.block.data.type.WallSign;
-import org.bukkit.craftbukkit.libs.org.apache.commons.lang3.EnumUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -384,6 +383,8 @@ public class Schematic {
 					case ACACIA_SIGN:
 					case BIRCH_SIGN:
 					case JUNGLE_SIGN:
+					case CRIMSON_SIGN:
+					case WARPED_SIGN:
 					case OAK_SIGN: {
 						Sign signData = (Sign) data;
 						block.setBlockData(signData);
@@ -407,6 +408,8 @@ public class Schematic {
 					case SPRUCE_WALL_SIGN:
 					case DARK_OAK_WALL_SIGN:
 					case ACACIA_WALL_SIGN:
+					case CRIMSON_WALL_SIGN:
+					case WARPED_WALL_SIGN:
 					case BIRCH_WALL_SIGN:
 					case JUNGLE_WALL_SIGN:
 					case OAK_WALL_SIGN: {
@@ -643,36 +646,29 @@ public class Schematic {
 				tiles.forEach(a -> {
 					if (!tiles.getCompound(tracker.trackCurrentTile).isEmpty()) {
 						NBTTagCompound c = tiles.getCompound(tracker.trackCurrentTile);
-
-						if (EnumUtils.isValidEnum(NBTMaterial.class, c.getString("Id").
-								replace("minecraft:", "").
-								toUpperCase())) {
-							switch (NBTMaterial.valueOf(c.getString("Id").
-									replace("minecraft:", "").
-									toUpperCase())) {
+						
+						NBTMaterial nbtMaterial = NBTMaterial.fromTag(c);
+						if (nbtMaterial != null) {
+							switch (nbtMaterial) {
 								case SIGN: {
 									try {
+										NBTSignBlock nbtSignBlock = new NBTSignBlock(c);
 										List<String> lines = new ArrayList<>();
-										lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_ONE));
-										lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_TWO));
-										lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_THREE));
-										lines.add(NBTUtils.getSignLineFromNBT(c, Position.TEXT_FOUR));
-
+										for (NBTSignBlock.Position position : NBTSignBlock.Position.values()) {
+											lines.add(nbtSignBlock.getLine(position));
+										}
+										
 										int[] pos = c.getIntArray("Pos");
 										if (!lines.isEmpty()) signs.put(new Vector(pos[0], pos[1], pos[2]), lines);
 										tiles.remove(tracker.trackCurrentTile);
-									} catch (WrongIdException e) {
-										//it wasn't a sign
+									} catch (WrongIdException ignored) {
+										// It wasn't a sign
 									}
-
+									
 									break;
 								}
-
-								//no more data to pull
-
-								default: {
-									break;
-								}
+								
+								default: break;
 							}
 						}
 					}
@@ -689,7 +685,8 @@ public class Schematic {
 			/*
 			 * 	Explanation: 
 			 *    The "Palette" is setup like this
-			 *      "block_data": id (the ID is a Unique ID that WorldEdit gives that corresponds to an index in the BlockDatas Array)
+			 *      "block_data": id (the ID is a Unique ID that WorldEdit gives that
+			 *                    corresponds to an index in the BlockDatas Array)
 			 *    So I loop through all the Keys in the "Palette" Compound
 			 *    and store the custom ID and BlockData in the palette Map
 			 */

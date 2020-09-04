@@ -23,6 +23,7 @@ repositories {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compileOnly 'org.spigotmc:spigot:1.16.2-R0.1-SNAPSHOT' // You need to run buildtools.
+    compileOnly 'org.jetbrains:annotations:20.1.0'
 }
 
 import org.apache.tools.ant.filters.ReplaceTokens
