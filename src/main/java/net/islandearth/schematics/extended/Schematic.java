@@ -59,8 +59,6 @@ public class Schematic {
 	private Map<Vector, Map<Integer, ItemStack>> chests = null;
 	private Map<Integer, BlockData> blocks = new HashMap<>();
 	
-	private List<Material> delayedBlocks;
-	
 	/**
 	 * @param plugin your plugin instance
 	 * @param schematic file to the schematic
@@ -68,116 +66,6 @@ public class Schematic {
 	public Schematic(SchematicPlugin plugin, File schematic) {
 		this.plugin = plugin;
 		this.schematic = schematic;
-		this.delayedBlocks = Arrays.asList(Material.LAVA,
-				Material.VINE,
-				Material.WATER,
-				Material.GRASS,
-				Material.ARMOR_STAND,
-				Material.TALL_GRASS,
-				Material.BLACK_BANNER,
-				Material.BLACK_WALL_BANNER,
-				Material.BLUE_BANNER,
-				Material.BLUE_WALL_BANNER,
-				Material.BROWN_BANNER,
-				Material.BROWN_WALL_BANNER,
-				Material.CYAN_BANNER,
-				Material.CYAN_WALL_BANNER,
-				Material.GRAY_BANNER,
-				Material.GRAY_WALL_BANNER,
-				Material.GREEN_BANNER,
-				Material.GREEN_WALL_BANNER,
-				Material.LIGHT_BLUE_BANNER,
-				Material.LIGHT_BLUE_WALL_BANNER,
-				Material.LIGHT_GRAY_BANNER,
-				Material.LIGHT_GRAY_WALL_BANNER,
-				Material.LIME_BANNER,
-				Material.LIME_WALL_BANNER,
-				Material.MAGENTA_BANNER,
-				Material.MAGENTA_WALL_BANNER,
-				Material.ORANGE_BANNER,
-				Material.ORANGE_WALL_BANNER,
-				Material.PINK_BANNER,
-				Material.PINK_WALL_BANNER,
-				Material.PURPLE_BANNER,
-				Material.PURPLE_WALL_BANNER,
-				Material.RED_BANNER,
-				Material.RED_WALL_BANNER,
-				Material.WHITE_BANNER,
-				Material.WHITE_WALL_BANNER,
-				Material.YELLOW_BANNER,
-				Material.YELLOW_WALL_BANNER,
-				
-				Material.GRASS,
-				Material.TALL_GRASS,
-				Material.SEAGRASS,
-				Material.TALL_SEAGRASS,
-				Material.FLOWER_POT,
-				Material.SUNFLOWER,
-				Material.CHORUS_FLOWER,
-				Material.OXEYE_DAISY,
-				Material.DEAD_BUSH,
-				Material.FERN,
-				Material.DANDELION,
-				Material.POPPY,
-				Material.BLUE_ORCHID,
-				Material.ALLIUM,
-				Material.AZURE_BLUET,
-				Material.RED_TULIP,
-				Material.ORANGE_TULIP,
-				Material.WHITE_TULIP,
-				Material.PINK_TULIP,
-				Material.BROWN_MUSHROOM,
-				Material.RED_MUSHROOM,
-				Material.END_ROD,
-				Material.ROSE_BUSH,
-				Material.PEONY,
-				Material.LARGE_FERN,
-				Material.REDSTONE,
-				Material.REPEATER,
-				Material.COMPARATOR,
-				Material.LEVER,
-				Material.SEA_PICKLE,
-				Material.SUGAR_CANE,
-				Material.FIRE,
-				Material.WHEAT,
-				Material.WHEAT_SEEDS,
-				Material.CARROTS,
-				Material.BEETROOT,
-				Material.BEETROOT_SEEDS,
-				Material.MELON,
-				Material.MELON_STEM,
-				Material.MELON_SEEDS,
-				Material.POTATOES,
-				Material.PUMPKIN,
-				Material.PUMPKIN_STEM,
-				Material.PUMPKIN_SEEDS,
-				Material.TORCH,
-				Material.RAIL,
-				Material.ACTIVATOR_RAIL,
-				Material.DETECTOR_RAIL,
-				Material.POWERED_RAIL,
-				
-				Material.ACACIA_FENCE,
-				Material.ACACIA_FENCE_GATE,
-				Material.BIRCH_FENCE,
-				Material.BIRCH_FENCE_GATE,
-				Material.DARK_OAK_FENCE,
-				Material.DARK_OAK_FENCE_GATE,
-				Material.JUNGLE_FENCE,
-				Material.JUNGLE_FENCE_GATE,
-				Material.NETHER_BRICK_FENCE,
-				Material.OAK_FENCE,
-				Material.OAK_FENCE_GATE,
-				Material.SPRUCE_FENCE,
-				Material.SPRUCE_FENCE_GATE,
-				
-				Material.OAK_DOOR,
-				Material.ACACIA_DOOR,
-				Material.BIRCH_DOOR,
-				Material.DARK_OAK_DOOR,
-				Material.JUNGLE_DOOR,
-				Material.SPRUCE_DOOR,
-				Material.IRON_DOOR);
 	}
 	
 	/**
@@ -206,8 +94,8 @@ public class Schematic {
 
 			List<Integer> indexes = new ArrayList<>();
 			List<Location> locations = new ArrayList<>();
-			List<Integer> otherindex = new ArrayList<>();
-			List<Location> otherloc = new ArrayList<>();
+			List<Integer> delayedIndex = new ArrayList<>();
+			List<Location> delayedLoc = new ArrayList<>();
 			
 			Map<Integer, Object> nbtData = new HashMap<>();
 			
@@ -250,12 +138,12 @@ public class Schematic {
 						 */
 						Material material = data.getMaterial();
 						if (material != Material.AIR) {
-							if (!delayedBlocks.contains(material)) {
+							if (!NBTMaterial.fromBukkit(material).isDelayed()) {
 								indexes.add(index);
 								locations.add(location);
 							} else {
-								otherindex.add(index);
-								otherloc.add(location);
+								delayedIndex.add(index);
+								delayedLoc.add(location);
 							}
 						}
 						
@@ -272,14 +160,11 @@ public class Schematic {
 				}
 			}
 			
-			/*
-			 * Make sure liquids are placed last.
-			 */
-
-			indexes.addAll(otherindex);
-			otherindex.clear();
-			locations.addAll(otherloc);
-			otherloc.clear();
+			// Make sure delayed blocks are placed last
+			indexes.addAll(delayedIndex);
+			delayedIndex.clear();
+			locations.addAll(delayedLoc);
+			delayedLoc.clear();
 
 			/*
 			 * Verify location of pasting
@@ -289,10 +174,7 @@ public class Schematic {
 			
 			for (Location validate : locations) {
 				if (!options.contains(Options.PLACE_ANYWHERE) && (validate.getBlock().getType() != Material.AIR || validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER) || new Location(validate.getWorld(), validate.getX(), loc.getY() - 1, validate.getZ()).getBlock().getType() == Material.AIR) {
-					/*
-					 * Show fake block where block is interfering with schematic
-					 */
-					
+				    // Show fake block where block is interfering with schematic
 		            paster.sendBlockChange(validate.getBlock().getLocation(), Material.RED_STAINED_GLASS.createBlockData());
 		            if (!options.contains(Options.PREVIEW)) {
 			            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
@@ -301,10 +183,7 @@ public class Schematic {
 		            }
 		            validated = false;
 				} else {
-					/*
-					 * Show fake block for air
-					 */
-					
+					// Show fake block for air
 		            paster.sendBlockChange(validate.getBlock().getLocation(), Material.GREEN_STAINED_GLASS.createBlockData());
 		            if (!options.contains(Options.PREVIEW)) {
 			            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
