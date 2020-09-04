@@ -16,6 +16,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class SchematicListener implements Listener {
@@ -36,9 +38,13 @@ public class SchematicListener implements Listener {
 				case RIGHT_CLICK_AIR:
 				case RIGHT_CLICK_BLOCK:
 					try {
-						List<Location> locations = plugin.getPlayerManagement().getBuilding(player.getUniqueId()).pasteSchematic(player.getTargetBlock(null, 10).getLocation().add(0, 1, 0), player, 5);
 						player.sendMessage(ChatColor.GREEN + "You are now building the schematic; " + plugin.getPlayerManagement().getBuilding(player.getUniqueId()) + "!");
-						if (locations != null) {
+						Collection<Location> locationCollection = plugin.getPlayerManagement()
+								.getBuilding(player.getUniqueId())
+								.pasteSchematic(player.getTargetBlock(null, 10)
+										.getLocation().add(0, 1, 0), player, 5, Schematic.Options.IGNORE_TRANSPARENT);
+						if (locationCollection != null) {
+							List<Location> locations = new ArrayList<>(locationCollection);
 							Scheduler scheduler = new Scheduler();
 							scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
 								for (Location location : locations) {

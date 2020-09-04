@@ -6,7 +6,25 @@ import org.jetbrains.annotations.Nullable;
 
 public enum NBTMaterial {
 	SIGN(true, true),
-	OAK_SIGN(true, false),//TODO
+	CHEST(false, true),
+	TRAPPED_CHEST(false, true), // does this exist in nbt?
+
+	OAK_SIGN(true, false),
+	SPRUCE_SIGN(true, false),
+	BIRCH_SIGN(true, false),
+	JUNGLE_SIGN(true, false),
+	ACACIA_SIGN(true, false),
+	DARK_OAK_SIGN(true, false),
+	CRIMSON_SIGN(true, false),
+	WARPED_SIGN(true, false),
+	OAK_WALL_SIGN(true, false),
+	SPRUCE_WALL_SIGN(true, false),
+	BIRCH_WALL_SIGN(true, false),
+	JUNGLE_WALL_SIGN(true, false),
+	ACACIA_WALL_SIGN(true, false),
+	DARK_OAK_WALL_SIGN(true, false),
+	CRIMSON_WALL_SIGN(true, false),
+	WARPED_WALL_SIGN(true, false),
 	
 	LAVA(true),
 	VINE(true),

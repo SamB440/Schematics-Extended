@@ -6,10 +6,13 @@ import com.google.gson.JsonObject;
 import net.islandearth.schematics.extended.WrongIdException;
 import net.minecraft.server.v1_16_R2.NBTTagCompound;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class NBTSignBlock extends NBTBlock {
-    
-    public NBTSignBlock(NBTTagCompound nbtTagCompound) {
-        super(nbtTagCompound);
+
+    public NBTSignBlock(NBTTagCompound nbtTag) {
+        super(nbtTag);
     }
     
     /**
@@ -18,7 +21,7 @@ public class NBTSignBlock extends NBTBlock {
      * @throws WrongIdException
      */
     public String getLine(Position position) throws WrongIdException {
-        NBTTagCompound compound = this.getNbtTagCompound();
+        NBTTagCompound compound = this.getNbtTag();
         if (compound.getString("Id").equals("minecraft:sign")) {
             String s1 = compound.getString(position.getId());
             JsonObject jsonObject = new Gson().fromJson(s1, JsonObject.class);
@@ -31,7 +34,15 @@ public class NBTSignBlock extends NBTBlock {
         }
         return null;
     }
-    
+
+    public List<String> getLines() throws WrongIdException {
+        List<String> lines = new ArrayList<>();
+        for (Position position : Position.values()) {
+            lines.add(getLine(position));
+        }
+        return lines;
+    }
+
     /**
      * Utility class for NBT sign positions
      * @author SamB440
