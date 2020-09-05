@@ -1,30 +1,33 @@
 package net.islandearth.schematics.extended;
 
+import net.islandearth.schematics.extended.block.NBTBlock;
+import net.islandearth.schematics.extended.block.NBTChestBlock;
+import net.islandearth.schematics.extended.block.NBTSignBlock;
 import net.minecraft.server.v1_16_R2.NBTTagCompound;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 public enum NBTMaterial {
-	SIGN(true, true),
-	CHEST(false, true),
-	TRAPPED_CHEST(false, true), // does this exist in nbt?
+	SIGN(true, NBTSignBlock.class),
+	CHEST(false, NBTChestBlock.class),
+	TRAPPED_CHEST(false, NBTChestBlock.class), // does this exist in nbt?
 
-	OAK_SIGN(true, false),
-	SPRUCE_SIGN(true, false),
-	BIRCH_SIGN(true, false),
-	JUNGLE_SIGN(true, false),
-	ACACIA_SIGN(true, false),
-	DARK_OAK_SIGN(true, false),
-	CRIMSON_SIGN(true, false),
-	WARPED_SIGN(true, false),
-	OAK_WALL_SIGN(true, false),
-	SPRUCE_WALL_SIGN(true, false),
-	BIRCH_WALL_SIGN(true, false),
-	JUNGLE_WALL_SIGN(true, false),
-	ACACIA_WALL_SIGN(true, false),
-	DARK_OAK_WALL_SIGN(true, false),
-	CRIMSON_WALL_SIGN(true, false),
-	WARPED_WALL_SIGN(true, false),
+	OAK_SIGN(true, NBTSignBlock.class),
+	SPRUCE_SIGN(true, NBTSignBlock.class),
+	BIRCH_SIGN(true, NBTSignBlock.class),
+	JUNGLE_SIGN(true, NBTSignBlock.class),
+	ACACIA_SIGN(true, NBTSignBlock.class),
+	DARK_OAK_SIGN(true, NBTSignBlock.class),
+	CRIMSON_SIGN(true, NBTSignBlock.class),
+	WARPED_SIGN(true, NBTSignBlock.class),
+	OAK_WALL_SIGN(true, NBTSignBlock.class),
+	SPRUCE_WALL_SIGN(true, NBTSignBlock.class),
+	BIRCH_WALL_SIGN(true, NBTSignBlock.class),
+	JUNGLE_WALL_SIGN(true, NBTSignBlock.class),
+	ACACIA_WALL_SIGN(true, NBTSignBlock.class),
+	DARK_OAK_WALL_SIGN(true, NBTSignBlock.class),
+	CRIMSON_WALL_SIGN(true, NBTSignBlock.class),
+	WARPED_WALL_SIGN(true, NBTSignBlock.class),
 	
 	LAVA(true),
 	VINE(true),
@@ -136,23 +139,23 @@ public enum NBTMaterial {
 	IRON_DOOR(true);
 	
 	private final boolean delayed;
-	private final boolean isNbtMaterial;
+	private final Class<? extends NBTBlock> nbtBlock;
 	
 	NBTMaterial(boolean delayed) {
-		this(delayed, false);
+		this(delayed, null);
 	}
-	
-	NBTMaterial(boolean delayed, boolean isNbtMaterial) {
+
+	NBTMaterial(boolean delayed, Class<? extends NBTBlock> nbtBlock) {
 		this.delayed = delayed;
-		this.isNbtMaterial = isNbtMaterial;
+		this.nbtBlock = nbtBlock;
 	}
 	
 	public boolean isDelayed() {
 		return delayed;
 	}
-	
-	public boolean isNbtMaterial() {
-		return isNbtMaterial;
+
+	public NBTBlock getNbtBlock(NBTTagCompound tagCompound) throws ReflectiveOperationException {
+		return nbtBlock.getConstructor(tagCompound.getClass()).newInstance(tagCompound);
 	}
 	
 	@Nullable

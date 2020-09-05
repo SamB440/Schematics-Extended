@@ -8,9 +8,13 @@ import net.minecraft.server.v1_16_R2.NBTTagCompound;
 import org.bukkit.block.BlockState;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NBTSignBlock extends NBTBlock {
+
+    private Map<Position, String> lines = new HashMap<>();
 
     public NBTSignBlock(NBTTagCompound nbtTag) {
         super(nbtTag);
@@ -26,12 +30,26 @@ public class NBTSignBlock extends NBTBlock {
         }
     }
 
+    @Override
+    public boolean isEmpty() {
+        try {
+            return getLines().isEmpty();
+        } catch (WrongIdException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
     /**
      * @param position - position of text to read from
      * @return text at the specified position on the sign
      * @throws WrongIdException
      */
     public String getLine(Position position) throws WrongIdException {
+        if (lines.containsKey(position)) {
+            return lines.get(position);
+        }
+
         NBTTagCompound compound = this.getNbtTag();
         if (compound.getString("Id").equals("minecraft:sign")) {
             String s1 = compound.getString(position.getId());

@@ -1,8 +1,6 @@
 package net.islandearth.schematics.extended;
 
 import net.islandearth.schematics.extended.block.NBTBlock;
-import net.islandearth.schematics.extended.block.NBTChestBlock;
-import net.islandearth.schematics.extended.block.NBTSignBlock;
 import net.islandearth.schematics.extended.example.BuildTask;
 import net.islandearth.schematics.extended.example.SchematicPlugin;
 import net.islandearth.schematics.extended.material.BlockDataMaterial;
@@ -282,10 +280,7 @@ public class Schematic {
 	public Schematic loadSchematic() {
 
 		try {
-
-			/*
-			 * Read the schematic file. Get the width, height, length, blocks, and block data.
-			 */
+			// Read the schematic file. Get the width, height, length, blocks, and block data.
 
 			FileInputStream fis = new FileInputStream(schematic);
 			NBTTagCompound nbt = NBTCompressedStreamTools.a(fis);
@@ -299,43 +294,16 @@ public class Schematic {
 			NBTTagCompound palette = nbt.getCompound("Palette");
 			NBTTagList tiles = (NBTTagList) nbt.get("BlockEntities");
 
-			/*
-			 * Load NBT data
-			 */
+			// Load NBT data
 			if (tiles != null) {
 				for (NBTBase tile : tiles) {
 					if (tile instanceof NBTTagCompound) {
-						NBTTagCompound c = (NBTTagCompound) tile;
-						if (!c.isEmpty()) {
-							NBTMaterial nbtMaterial = NBTMaterial.fromTag(c);
+						NBTTagCompound compound = (NBTTagCompound) tile;
+						if (!compound.isEmpty()) {
+							NBTMaterial nbtMaterial = NBTMaterial.fromTag(compound);
 							if (nbtMaterial != null) {
-								switch (nbtMaterial) {
-									case SIGN: {
-										try {
-											NBTSignBlock nbtSignBlock = new NBTSignBlock(c);
-											List<String> lines = nbtSignBlock.getLines();
-											if (!lines.isEmpty()) nbtBlocks.put(nbtSignBlock.getOffset(), nbtSignBlock);
-										} catch (WrongIdException ignored) {
-											// It wasn't a sign
-										}
-
-										break;
-									}
-
-									case CHEST:
-									case TRAPPED_CHEST: {
-										try {
-											NBTChestBlock nbtChestBlock = new NBTChestBlock(c);
-											if (!nbtChestBlock.getItems().isEmpty())
-												nbtBlocks.put(nbtChestBlock.getOffset(), nbtChestBlock);
-										} catch (WrongIdException ignored) {
-											// It wasn't a chest
-										}
-										break;
-									}
-
-									default: break;
-								}
+								NBTBlock nbtBlock = nbtMaterial.getNbtBlock(compound);
+								if (!nbtBlock.isEmpty()) nbtBlocks.put(nbtBlock.getOffset(), nbtBlock);
 							}
 						}
 					}
@@ -360,7 +328,6 @@ public class Schematic {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		return this;
 	}
 
@@ -382,7 +349,8 @@ public class Schematic {
 			return BlockFace.NORTH;
 		} else if (yaw < 315) {
 			return BlockFace.EAST;
-		} return BlockFace.NORTH;
+		}
+		return BlockFace.NORTH;
 	}
 
 	/**

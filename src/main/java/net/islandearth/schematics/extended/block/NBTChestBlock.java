@@ -12,17 +12,28 @@ import java.util.Map;
 
 public class NBTChestBlock extends NBTBlock {
 
+    private Map<Integer, ItemStack> allItems = new HashMap<>();
+
     public NBTChestBlock(NBTTagCompound nbtTag) {
         super(nbtTag);
     }
 
     @Override
     public void setData(BlockState state) throws WrongIdException {
-        Map<Integer, ItemStack> items = this.getItems();
         org.bukkit.block.Chest chest = (org.bukkit.block.Chest) state;
-        for (Integer location : items.keySet()) {
-            chest.getBlockInventory().setItem(location, items.get(location));
+        for (Integer location : allItems.keySet()) {
+            chest.getSnapshotInventory().setItem(location, allItems.get(location));
         }
+    }
+
+    @Override
+    public boolean isEmpty() {
+        try {
+            return getItems().isEmpty();
+        } catch (WrongIdException e) {
+            e.printStackTrace();
+        }
+        return true;
     }
 
     /**
@@ -30,13 +41,14 @@ public class NBTChestBlock extends NBTBlock {
      * @throws WrongIdException if it's not a chest
      */
     public Map<Integer, ItemStack> getItems() throws WrongIdException {
+        if (!allItems.isEmpty()) return allItems;
+
         NBTTagCompound compound = this.getNbtTag();
-        Map<Integer, ItemStack> allItems = new HashMap<>();
         if (compound.getString("Id").equals("minecraft:chest")) {
             if (compound.get("Items") != null) {
                 NBTTagList items = (NBTTagList) compound.get("Items");
-                for (int i2 = 0; i2 < items.size(); i2++) {
-                    NBTTagCompound anItem = items.getCompound(i2);
+                for (int i = 0; i < items.size(); i++) {
+                    NBTTagCompound anItem = items.getCompound(i);
                     Material mat = Material.valueOf(anItem.getString("id").replace("minecraft:", "").toUpperCase());
                     ItemStack item = new ItemStack(mat, anItem.getInt("Count"));
                     allItems.put(anItem.getInt("Slot"), item);

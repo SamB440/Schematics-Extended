@@ -24,4 +24,6 @@ public abstract class NBTBlock {
     }
 
     public abstract void setData(BlockState state) throws WrongIdException;
+
+    public abstract boolean isEmpty();
 }
