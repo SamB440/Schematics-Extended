@@ -42,7 +42,7 @@ public class SchematicListener implements Listener {
 						Collection<Location> locationCollection = plugin.getPlayerManagement()
 								.getBuilding(player.getUniqueId())
 								.pasteSchematic(player.getTargetBlock(null, 10)
-										.getLocation().add(0, 1, 0), player, 5, Schematic.Options.IGNORE_TRANSPARENT);
+										.getLocation().add(0, 1, 0), player, 1, Schematic.Options.IGNORE_TRANSPARENT);
 						if (locationCollection != null) {
 							List<Location> locations = new ArrayList<>(locationCollection);
 							Scheduler scheduler = new Scheduler();

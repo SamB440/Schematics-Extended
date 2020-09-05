@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.islandearth.schematics.extended.WrongIdException;
 import net.minecraft.server.v1_16_R2.NBTTagCompound;
+import org.bukkit.block.BlockState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,17 @@ public class NBTSignBlock extends NBTBlock {
     public NBTSignBlock(NBTTagCompound nbtTag) {
         super(nbtTag);
     }
-    
+
+    @Override
+    public void setData(BlockState state) throws WrongIdException {
+        org.bukkit.block.Sign sign = (org.bukkit.block.Sign) state;
+        int current = 0;
+        for (String line : this.getLines()) {
+            sign.setLine(current, line);
+            current++;
+        }
+    }
+
     /**
      * @param position - position of text to read from
      * @return text at the specified position on the sign

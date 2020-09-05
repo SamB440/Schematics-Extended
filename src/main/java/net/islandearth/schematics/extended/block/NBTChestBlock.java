@@ -4,6 +4,7 @@ import net.islandearth.schematics.extended.WrongIdException;
 import net.minecraft.server.v1_16_R2.NBTTagCompound;
 import net.minecraft.server.v1_16_R2.NBTTagList;
 import org.bukkit.Material;
+import org.bukkit.block.BlockState;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
@@ -13,6 +14,15 @@ public class NBTChestBlock extends NBTBlock {
 
     public NBTChestBlock(NBTTagCompound nbtTag) {
         super(nbtTag);
+    }
+
+    @Override
+    public void setData(BlockState state) throws WrongIdException {
+        Map<Integer, ItemStack> items = this.getItems();
+        org.bukkit.block.Chest chest = (org.bukkit.block.Chest) state;
+        for (Integer location : items.keySet()) {
+            chest.getBlockInventory().setItem(location, items.get(location));
+        }
     }
 
     /**

@@ -5,6 +5,9 @@ import net.islandearth.schematics.extended.block.NBTChestBlock;
 import net.islandearth.schematics.extended.block.NBTSignBlock;
 import net.islandearth.schematics.extended.example.BuildTask;
 import net.islandearth.schematics.extended.example.SchematicPlugin;
+import net.islandearth.schematics.extended.material.BlockDataMaterial;
+import net.islandearth.schematics.extended.material.DirectionalBlockDataMaterial;
+import net.islandearth.schematics.extended.material.MultipleFacingBlockDataMaterial;
 import net.minecraft.server.v1_16_R2.NBTBase;
 import net.minecraft.server.v1_16_R2.NBTCompressedStreamTools;
 import net.minecraft.server.v1_16_R2.NBTTagCompound;
@@ -17,10 +20,11 @@ import org.bukkit.Particle;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A utility class that previews and pastes schematics block-by-block with asynchronous support.
@@ -191,35 +194,6 @@ public class Schematic {
 
 			tracker.trackCurrentBlock = 0;
 
-			List<Material> validData = new ArrayList<>();
-			validData.add(Material.LADDER);
-			validData.add(Material.TORCH);
-			validData.add(Material.CHEST);
-			validData.add(Material.BLACK_STAINED_GLASS_PANE);
-			validData.add(Material.BLUE_STAINED_GLASS_PANE);
-			validData.add(Material.BROWN_STAINED_GLASS_PANE);
-			validData.add(Material.CYAN_STAINED_GLASS_PANE);
-			validData.add(Material.GLASS_PANE);
-			validData.add(Material.WHITE_STAINED_GLASS_PANE);
-			validData.add(Material.GREEN_STAINED_GLASS_PANE);
-			validData.add(Material.GRAY_STAINED_GLASS_PANE);
-			validData.add(Material.LIGHT_BLUE_STAINED_GLASS_PANE);
-			validData.add(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-			validData.add(Material.LIME_STAINED_GLASS_PANE);
-			validData.add(Material.MAGENTA_STAINED_GLASS_PANE);
-			validData.add(Material.ORANGE_STAINED_GLASS_PANE);
-			validData.add(Material.PINK_STAINED_GLASS_PANE);
-			validData.add(Material.PURPLE_STAINED_GLASS_PANE);
-			validData.add(Material.RED_STAINED_GLASS_PANE);
-			validData.add(Material.YELLOW_STAINED_GLASS_PANE);
-			validData.add(Material.TORCH);
-			validData.addAll(ExtraTags.FENCE_GATES.getMaterials());
-			validData.addAll(Tag.SIGNS.getValues());
-			validData.addAll(Tag.BANNERS.getValues());
-			validData.addAll(Tag.STAIRS.getValues());
-			validData.addAll(Tag.BEDS.getValues());
-			validData.addAll(Tag.DOORS.getValues());
-
 			// List of block faces to update *after* the schematic is done pasting.
 			List<Block> toUpdate = new ArrayList<>();
 			indexLocations.forEach((index, location) -> {
@@ -239,133 +213,25 @@ public class Schematic {
 				BlockData data = blocks.get((int) blockDatas[indexes.get(tracker.trackCurrentBlock)]);
 				block.setType(data.getMaterial(), false);
 				block.setBlockData(data);
-				switch (data.getMaterial()) {
-					case SPRUCE_SIGN: case DARK_OAK_SIGN: case ACACIA_SIGN: case BIRCH_SIGN: case JUNGLE_SIGN:
-					case CRIMSON_SIGN: case WARPED_SIGN: case OAK_SIGN: case SPRUCE_WALL_SIGN: case DARK_OAK_WALL_SIGN:
-					case ACACIA_WALL_SIGN: case CRIMSON_WALL_SIGN: case WARPED_WALL_SIGN: case BIRCH_WALL_SIGN:
-					case JUNGLE_WALL_SIGN: case OAK_WALL_SIGN: {
-						if (nbtData.containsKey(indexes.get(tracker.trackCurrentBlock))) {
-							NBTSignBlock lines = (NBTSignBlock) nbtData.get(indexes.get(tracker.trackCurrentBlock));
-
-							org.bukkit.block.Sign sign = (org.bukkit.block.Sign) block.getState();
-							try {
-								int current = 0;
-								for (String line : lines.getLines()) {
-									sign.setLine(current, line);
-									current++;
-								}
-							} catch (WrongIdException e) {
-								e.printStackTrace();
-							}
-							sign.update();
-						}
-
-						break;
-					}
-
-					case CHEST: case TRAPPED_CHEST: {
-						if (nbtData.containsKey(indexes.get(tracker.trackCurrentBlock))) {
-							NBTChestBlock nbtChestBlock = (NBTChestBlock) nbtData.get(indexes.get(tracker.trackCurrentBlock));
-							try {
-								Map<Integer, ItemStack> items = nbtChestBlock.getItems();
-								org.bukkit.block.Chest chest = (org.bukkit.block.Chest) block.getState();
-								for (Integer location : items.keySet()) {
-									chest.getBlockInventory().setItem(location, items.get(location));
-								}
-							} catch (WrongIdException ignored) { }
-						}
-
-						break;
-					}
-
-					default: {
-						break;
+				if (nbtData.containsKey(indexes.get(tracker.trackCurrentBlock))) {
+					NBTBlock nbtBlock = nbtData.get(indexes.get(tracker.trackCurrentBlock));
+					try {
+						BlockState state = block.getState();
+						nbtBlock.setData(state);
+						state.update();
+					} catch (WrongIdException e) {
+						e.printStackTrace();
 					}
 				}
 
-				if (validData.contains(data.getMaterial())) {
-					Directional facing = (Directional) block.getState().getBlockData();
-					switch (face) {
-						case NORTH:
-							switch (facing.getFacing()) {
-								case NORTH:
-									facing.setFacing(BlockFace.NORTH);
-									break;
-								case SOUTH:
-									facing.setFacing(BlockFace.SOUTH);
-									break;
-								case EAST:
-									facing.setFacing(BlockFace.WEST);
-									break;
-								case WEST:
-									facing.setFacing(BlockFace.EAST);
-									break;
-								default:
-									break;
-							}
-
-							break;
-						case EAST:
-							switch (facing.getFacing()) {
-								case NORTH:
-									facing.setFacing(BlockFace.EAST);
-									break;
-								case SOUTH:
-									facing.setFacing(BlockFace.WEST);
-									break;
-								case EAST:
-									facing.setFacing(BlockFace.NORTH);
-									break;
-								case WEST:
-									facing.setFacing(BlockFace.SOUTH);
-									break;
-								default:
-									break;
-							}
-
-							break;
-						case SOUTH:
-							switch (facing.getFacing()) {
-								case NORTH:
-									facing.setFacing(BlockFace.SOUTH);
-									break;
-								case SOUTH:
-									facing.setFacing(BlockFace.NORTH);
-									break;
-								case EAST:
-									facing.setFacing(BlockFace.EAST);
-									break;
-								case WEST:
-									facing.setFacing(BlockFace.WEST);
-									break;
-								default:
-									break;
-							}
-
-							break;
-						case WEST:
-							switch (facing.getFacing()) {
-								case NORTH:
-									facing.setFacing(BlockFace.WEST);
-									break;
-								case SOUTH:
-									facing.setFacing(BlockFace.EAST);
-									break;
-								case EAST:
-									facing.setFacing(BlockFace.SOUTH);
-									break;
-								case WEST:
-									facing.setFacing(BlockFace.NORTH);
-									break;
-								default:
-									break;
-							}
-
-							break;
-						default:
-							break;
-					} block.setBlockData(facing);
+				// Update block faces
+				BlockDataMaterial blockDataMaterial = null;
+				if (block.getState().getBlockData() instanceof Directional) {
+					blockDataMaterial = new DirectionalBlockDataMaterial(block.getState());
+				} else if (block.getState().getBlockData() instanceof MultipleFacing) {
+					blockDataMaterial = new MultipleFacingBlockDataMaterial(block.getState());
 				}
+				if (blockDataMaterial != null) block.setBlockData(blockDataMaterial.update(face));
 
 				block.getState().update(true, false);
 
@@ -449,7 +315,6 @@ public class Schematic {
 											NBTSignBlock nbtSignBlock = new NBTSignBlock(c);
 											List<String> lines = nbtSignBlock.getLines();
 											if (!lines.isEmpty()) nbtBlocks.put(nbtSignBlock.getOffset(), nbtSignBlock);
-											//tiles.remove(current);
 										} catch (WrongIdException ignored) {
 											// It wasn't a sign
 										}
