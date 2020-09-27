@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Per-player task that previews schematics async
@@ -26,7 +27,7 @@ public class BuildTask {
 
 	private Player player;
 
-	private Map<Player, List<Location>> cache = new HashMap<>();
+	private Map<UUID, List<Location>> cache = new HashMap<>();
 	
 	public BuildTask(SchematicPlugin plugin, Player player) {
 		this.plugin = plugin;
@@ -43,25 +44,16 @@ public class BuildTask {
 				player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder(ChatColor.RED + "Left Click to cancel" + ChatColor.GRAY + " : " + ChatColor.GREEN + "Right Click to place").create());
 				try {
 					List<Location> locations = new ArrayList<>(schematic.pasteSchematic(player.getTargetBlock(null, 10).getLocation().add(0, 1, 0), player, Options.PREVIEW, Options.IGNORE_TRANSPARENT));
-					Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-						if (cache.containsKey(player)) {
-							if (!cache.get(player).equals(locations)) {
-								int current = 0;
-								for (Location location : cache.get(player)) {
-									if (current == locations.size()) break;
-									if (location.distance(locations.get(current)) >= 1) player.sendBlockChange(location, location.getBlock().getBlockData());
-									current++;
-								}
-								cache.remove(player);
-							}
-						}
-					if (!cache.containsKey(player)) cache.put(player, locations);
-					}, 2L);
+					if (cache.containsKey(player.getUniqueId()) && !cache.get(player.getUniqueId()).equals(locations)) {
+						cache.get(player.getUniqueId()).forEach(location -> player.sendBlockChange(location, location.getBlock().getBlockData()));
+						cache.remove(player.getUniqueId());
+					}
+					cache.put(player.getUniqueId(), locations);
 				} catch (SchematicNotLoadedException e) {
 					e.printStackTrace();
 				}
 			} else if (!pm.isBuilding(player.getUniqueId())) {
-				for (Location location : cache.get(player)) {
+				for (Location location : cache.get(player.getUniqueId())) {
 					player.sendBlockChange(location, location.getBlock().getBlockData());
 				}
 				scheduler.cancel();
