@@ -6,7 +6,7 @@ package net.islandearth.schematics.extended;
  */
 public class WrongIdException extends Exception {
 
-	public WrongIdException(String message) {
-		super(message);
-	}
+    public WrongIdException(String message) {
+        super(message);
+    }
 }

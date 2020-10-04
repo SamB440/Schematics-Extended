@@ -13,31 +13,31 @@ import java.util.UUID;
  */
 public class PlayerManagement {
 
-	private JavaPlugin plugin;
-	
-	private Map<UUID, Schematic> building = new HashMap<>();
+    private JavaPlugin plugin;
 
-	public PlayerManagement(JavaPlugin plugin) {
-		this.plugin = plugin;
-	}
+    private Map<UUID, Schematic> building = new HashMap<>();
 
-	public void setBuilding(UUID uuid, Schematic schematic) {
-		if (!building.containsKey(uuid)) {
-			building.put(uuid, schematic);
-		} else {
-		    building.replace(uuid, schematic);
-		}
-	}
-	
-	public boolean isBuilding(UUID uuid) {
-		return building.containsKey(uuid);
-	}
-	
-	public Schematic getBuilding(UUID uuid) {
-		return building.get(uuid);
-	}
-	
-	public void removeBuilding(UUID uuid) {
-		building.remove(uuid);
-	}
+    public PlayerManagement(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    public void setBuilding(UUID uuid, Schematic schematic) {
+        if (!building.containsKey(uuid)) {
+            building.put(uuid, schematic);
+        } else {
+            building.replace(uuid, schematic);
+        }
+    }
+
+    public boolean isBuilding(UUID uuid) {
+        return building.containsKey(uuid);
+    }
+
+    public Schematic getBuilding(UUID uuid) {
+        return building.get(uuid);
+    }
+
+    public void removeBuilding(UUID uuid) {
+        building.remove(uuid);
+    }
 }

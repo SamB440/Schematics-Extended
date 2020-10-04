@@ -5,8 +5,8 @@ package net.islandearth.schematics.extended;
  * @author SamB440
  */
 public class SchematicNotLoadedException extends Exception {
-	
-	public SchematicNotLoadedException(String message) {
-		super(message);
-	}
+
+    public SchematicNotLoadedException(String message) {
+        super(message);
+    }
 }
