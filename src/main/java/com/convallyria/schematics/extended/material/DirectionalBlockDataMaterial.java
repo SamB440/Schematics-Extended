@@ -1,4 +1,4 @@
-package net.islandearth.schematics.extended.material;
+package com.convallyria.schematics.extended.material;
 
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;

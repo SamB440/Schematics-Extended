@@ -1,7 +1,9 @@
-package net.islandearth.schematics.extended.block;
+package com.convallyria.schematics.extended.block;
 
-import net.islandearth.schematics.extended.WrongIdException;
-import net.minecraft.server.v1_16_R2.NBTTagCompound;
+import net.minecraft.nbt.NBTTagCompound;
+
+import com.convallyria.schematics.extended.WrongIdException;
+
 import org.bukkit.block.BlockState;
 import org.bukkit.util.Vector;
 

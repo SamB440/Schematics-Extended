@@ -1,7 +1,7 @@
 name: SchematicsExtended
 version: @version@
 main: net.islandearth.schematics.extended.example.SchematicPlugin
-api-version: 1.15
+api-version: 1.17
 load: STARTUP
 authors: [SamB440, brainsynder, Math0424]
 description: Build schematics block-by-block!

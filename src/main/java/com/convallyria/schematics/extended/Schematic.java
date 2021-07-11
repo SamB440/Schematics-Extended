@@ -1,15 +1,20 @@
-package net.islandearth.schematics.extended;
+package com.convallyria.schematics.extended;
 
-import net.islandearth.schematics.extended.block.NBTBlock;
-import net.islandearth.schematics.extended.example.BuildTask;
-import net.islandearth.schematics.extended.example.SchematicPlugin;
-import net.islandearth.schematics.extended.material.BlockDataMaterial;
-import net.islandearth.schematics.extended.material.DirectionalBlockDataMaterial;
-import net.islandearth.schematics.extended.material.MultipleFacingBlockDataMaterial;
-import net.minecraft.server.v1_16_R2.NBTBase;
-import net.minecraft.server.v1_16_R2.NBTCompressedStreamTools;
-import net.minecraft.server.v1_16_R2.NBTTagCompound;
-import net.minecraft.server.v1_16_R2.NBTTagList;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import com.convallyria.schematics.extended.block.NBTBlock;
+import com.convallyria.schematics.extended.example.BuildTask;
+import com.convallyria.schematics.extended.example.SchematicPlugin;
+import com.convallyria.schematics.extended.material.BlockDataMaterial;
+import com.convallyria.schematics.extended.material.DirectionalBlockDataMaterial;
+import com.convallyria.schematics.extended.material.MultipleFacingBlockDataMaterial;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -26,18 +31,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTCompressedStreamTools;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 
 /**
  * A utility class that previews and pastes schematics block-by-block with asynchronous support.
  * <br></br>
- * @version 2.0.3
+ * @version 2.0.4
  * @author SamB440 - Schematic previews, centering and pasting block-by-block, class itself
  * @author brainsynder - 1.13 Palette Schematic Reader
  * @author Math0424 - Rotation calculations

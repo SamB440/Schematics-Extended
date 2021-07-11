@@ -1,8 +1,5 @@
-package net.islandearth.schematics.extended.example;
+package com.convallyria.schematics.extended.example;
 
-import net.islandearth.schematics.extended.Scheduler;
-import net.islandearth.schematics.extended.Schematic;
-import net.islandearth.schematics.extended.SchematicNotLoadedException;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -20,13 +17,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class SchematicListener implements Listener {
+import com.convallyria.schematics.extended.Scheduler;
+import com.convallyria.schematics.extended.Schematic;
+import com.convallyria.schematics.extended.SchematicNotLoadedException;
 
-    private SchematicPlugin plugin;
-
-    public SchematicListener(SchematicPlugin plugin) {
-        this.plugin = plugin;
-    }
+public record SchematicListener(SchematicPlugin plugin) implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent pie) {

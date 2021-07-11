@@ -1,10 +1,12 @@
-package net.islandearth.schematics.extended.block;
+package com.convallyria.schematics.extended.block;
 
+import com.convallyria.schematics.extended.WrongIdException;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.islandearth.schematics.extended.WrongIdException;
-import net.minecraft.server.v1_16_R2.NBTTagCompound;
+
+import net.minecraft.nbt.NBTTagCompound;
+
 import org.bukkit.block.BlockState;
 
 import java.util.ArrayList;

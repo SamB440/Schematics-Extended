@@ -3,8 +3,8 @@ apply plugin: 'java'
 group = pluginGroup
 version = pluginVersion
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = JavaVersion.VERSION_16
+targetCompatibility = JavaVersion.VERSION_16
 
 repositories {
     mavenCentral()
@@ -21,15 +21,13 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compileOnly 'org.spigotmc:spigot:1.16.2-R0.1-SNAPSHOT' // You need to run buildtools.
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    compileOnly 'org.spigotmc:spigot:1.17-R0.1-SNAPSHOT' // You need to run buildtools.
     compileOnly 'org.jetbrains:annotations:20.1.0'
 }
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
 processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        filter ReplaceTokens, tokens: [version: version]
-    }
+    filter ReplaceTokens, tokens: [version: version]
 }

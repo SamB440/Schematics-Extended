@@ -1,4 +1,4 @@
-package net.islandearth.schematics.extended.example;
+package com.convallyria.schematics.extended.example;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;

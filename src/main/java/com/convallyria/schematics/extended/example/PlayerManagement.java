@@ -1,11 +1,12 @@
-package net.islandearth.schematics.extended.example;
-
-import net.islandearth.schematics.extended.Schematic;
-import org.bukkit.plugin.java.JavaPlugin;
+package com.convallyria.schematics.extended.example;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import com.convallyria.schematics.extended.Schematic;
+
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Utility class to handle player's previews

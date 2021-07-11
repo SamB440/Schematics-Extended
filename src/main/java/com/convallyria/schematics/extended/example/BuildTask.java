@@ -1,9 +1,5 @@
-package net.islandearth.schematics.extended.example;
+package com.convallyria.schematics.extended.example;
 
-import net.islandearth.schematics.extended.Scheduler;
-import net.islandearth.schematics.extended.Schematic;
-import net.islandearth.schematics.extended.Schematic.Options;
-import net.islandearth.schematics.extended.SchematicNotLoadedException;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Bukkit;
@@ -16,6 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import com.convallyria.schematics.extended.Scheduler;
+import com.convallyria.schematics.extended.Schematic;
+import com.convallyria.schematics.extended.SchematicNotLoadedException;
+import com.convallyria.schematics.extended.Schematic.Options;
 
 /**
  * Per-player task that previews schematics async

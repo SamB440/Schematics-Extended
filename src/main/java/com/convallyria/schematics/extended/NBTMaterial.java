@@ -1,11 +1,13 @@
-package net.islandearth.schematics.extended;
+package com.convallyria.schematics.extended;
 
-import net.islandearth.schematics.extended.block.NBTBlock;
-import net.islandearth.schematics.extended.block.NBTChestBlock;
-import net.islandearth.schematics.extended.block.NBTSignBlock;
-import net.minecraft.server.v1_16_R2.NBTTagCompound;
+import com.convallyria.schematics.extended.block.NBTBlock;
+import com.convallyria.schematics.extended.block.NBTChestBlock;
+import com.convallyria.schematics.extended.block.NBTSignBlock;
+
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.nbt.NBTTagCompound;
 
 public enum NBTMaterial {
     SIGN(true, NBTSignBlock.class),
