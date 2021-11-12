@@ -3,11 +3,9 @@ package com.convallyria.schematics.extended;
 import com.convallyria.schematics.extended.block.NBTBlock;
 import com.convallyria.schematics.extended.block.NBTChestBlock;
 import com.convallyria.schematics.extended.block.NBTSignBlock;
-
-import org.bukkit.Material;
-import org.jetbrains.annotations.Nullable;
-
 import net.minecraft.nbt.NBTTagCompound;
+import org.bukkit.Material;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public enum NBTMaterial {
     SIGN(true, NBTSignBlock.class),
@@ -143,11 +141,11 @@ public enum NBTMaterial {
     private final boolean delayed;
     private final Class<? extends NBTBlock> nbtBlock;
 
-    NBTMaterial(boolean delayed) {
+    NBTMaterial(final boolean delayed) {
         this(delayed, null);
     }
 
-    NBTMaterial(boolean delayed, Class<? extends NBTBlock> nbtBlock) {
+    NBTMaterial(final boolean delayed, final Class<? extends NBTBlock> nbtBlock) {
         this.delayed = delayed;
         this.nbtBlock = nbtBlock;
     }
@@ -156,26 +154,30 @@ public enum NBTMaterial {
         return delayed;
     }
 
-    public NBTBlock getNbtBlock(NBTTagCompound tagCompound) throws ReflectiveOperationException {
+    public NBTBlock getNbtBlock(final NBTTagCompound tagCompound) throws ReflectiveOperationException {
         return nbtBlock.getConstructor(tagCompound.getClass()).newInstance(tagCompound);
     }
 
+    public static Material getBukkitFromTag(final NBTTagCompound nbtTagCompound) {
+        return Material.matchMaterial(nbtTagCompound.getString("Id"));
+    }
+
     @Nullable
-    public static NBTMaterial fromTag(NBTTagCompound nbtTagCompound) {
+    public static NBTMaterial fromTag(final NBTTagCompound nbtTagCompound) {
         try {
             return NBTMaterial.valueOf(nbtTagCompound.getString("Id").
                     replace("minecraft:", "").
                     toUpperCase());
-        } catch (IllegalArgumentException ignored) {
+        } catch (final IllegalArgumentException ignored) {
             return null;
         }
     }
 
     @Nullable
-    public static NBTMaterial fromBukkit(Material material) {
+    public static NBTMaterial fromBukkit(final Material material) {
         try {
             return NBTMaterial.valueOf(material.toString().toUpperCase());
-        } catch (IllegalArgumentException ignored) {
+        } catch (final IllegalArgumentException ignored) {
             return null;
         }
     }

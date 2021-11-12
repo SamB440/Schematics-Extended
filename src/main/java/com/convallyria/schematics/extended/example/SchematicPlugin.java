@@ -1,10 +1,10 @@
 package com.convallyria.schematics.extended.example;
 
+import me.lucko.helper.plugin.ExtendedJavaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.java.JavaPlugin;
 
-public class SchematicPlugin extends JavaPlugin {
+public class SchematicPlugin extends ExtendedJavaPlugin {
 
     public PlayerManagement getPlayerManagement() {
         return playerManagement;
@@ -13,7 +13,8 @@ public class SchematicPlugin extends JavaPlugin {
     private PlayerManagement playerManagement;
 
     @Override
-    public void onEnable() {
+    public void enable() {
+        this.saveResource("schematics/example.schem", true);
         this.playerManagement = new PlayerManagement(this);
         registerListeners();
     }

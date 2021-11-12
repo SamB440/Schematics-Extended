@@ -14,15 +14,15 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class PlayerManagement {
 
-    private JavaPlugin plugin;
+    private final JavaPlugin plugin;
 
-    private Map<UUID, Schematic> building = new HashMap<>();
+    private final Map<UUID, Schematic> building = new HashMap<>();
 
-    public PlayerManagement(JavaPlugin plugin) {
+    public PlayerManagement(final JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
-    public void setBuilding(UUID uuid, Schematic schematic) {
+    public void setBuilding(final UUID uuid, final Schematic schematic) {
         if (!building.containsKey(uuid)) {
             building.put(uuid, schematic);
         } else {
@@ -30,15 +30,15 @@ public class PlayerManagement {
         }
     }
 
-    public boolean isBuilding(UUID uuid) {
+    public boolean isBuilding(final UUID uuid) {
         return building.containsKey(uuid);
     }
 
-    public Schematic getBuilding(UUID uuid) {
+    public Schematic getBuilding(final UUID uuid) {
         return building.get(uuid);
     }
 
-    public void removeBuilding(UUID uuid) {
+    public void removeBuilding(final UUID uuid) {
         building.remove(uuid);
     }
 }

@@ -14,16 +14,16 @@ import com.convallyria.schematics.extended.WrongIdException;
 
 public class NBTChestBlock extends NBTBlock {
 
-    private Map<Integer, ItemStack> allItems = new HashMap<>();
+    private final Map<Integer, ItemStack> allItems = new HashMap<>();
 
-    public NBTChestBlock(NBTTagCompound nbtTag) {
+    public NBTChestBlock(final NBTTagCompound nbtTag) {
         super(nbtTag);
     }
 
     @Override
-    public void setData(BlockState state) throws WrongIdException {
-        org.bukkit.block.Chest chest = (org.bukkit.block.Chest) state;
-        for (Integer location : allItems.keySet()) {
+    public void setData(final BlockState state) {
+        final org.bukkit.block.Chest chest = (org.bukkit.block.Chest) state;
+        for (final Integer location : allItems.keySet()) {
             chest.getSnapshotInventory().setItem(location, allItems.get(location));
         }
     }
@@ -32,7 +32,7 @@ public class NBTChestBlock extends NBTBlock {
     public boolean isEmpty() {
         try {
             return getItems().isEmpty();
-        } catch (WrongIdException e) {
+        } catch (final WrongIdException e) {
             e.printStackTrace();
         }
         return true;
@@ -45,14 +45,14 @@ public class NBTChestBlock extends NBTBlock {
     public Map<Integer, ItemStack> getItems() throws WrongIdException {
         if (!allItems.isEmpty()) return allItems;
 
-        NBTTagCompound compound = this.getNbtTag();
+        final NBTTagCompound compound = this.getNbtTag();
         if (compound.getString("Id").equals("minecraft:chest")) {
             if (compound.get("Items") != null) {
-                NBTTagList items = (NBTTagList) compound.get("Items");
+                final NBTTagList items = (NBTTagList) compound.get("Items");
                 for (int i = 0; i < items.size(); i++) {
-                    NBTTagCompound anItem = items.getCompound(i);
-                    Material mat = Material.valueOf(anItem.getString("id").replace("minecraft:", "").toUpperCase());
-                    ItemStack item = new ItemStack(mat, anItem.getInt("Count"));
+                    final NBTTagCompound anItem = items.getCompound(i);
+                    final Material mat = Material.valueOf(anItem.getString("id").replace("minecraft:", "").toUpperCase());
+                    final ItemStack item = new ItemStack(mat, anItem.getInt("Count"));
                     allItems.put(anItem.getInt("Slot"), item);
                 }
             }

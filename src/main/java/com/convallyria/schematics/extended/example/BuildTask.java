@@ -44,7 +44,8 @@ public class BuildTask {
                 Schematic schematic = pm.getBuilding(player.getUniqueId());
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder(ChatColor.RED + "Left Click to cancel" + ChatColor.GRAY + " : " + ChatColor.GREEN + "Right Click to place").create());
                 try {
-                    List<Location> locations = new ArrayList<>(schematic.pasteSchematic(player.getTargetBlock(null, 10).getLocation().add(0, 1, 0), player, Options.PREVIEW, Options.IGNORE_TRANSPARENT));
+                    List<Location> locations = new ArrayList<>(schematic.pasteSchematic(player.getTargetBlock(null, 10).getLocation().add(0, 1, 0),
+                            player, Options.USE_GAME_MARKER, Options.PREVIEW, Options.IGNORE_TRANSPARENT));
                     if (cache.containsKey(player.getUniqueId()) && !cache.get(player.getUniqueId()).equals(locations)) {
                         cache.get(player.getUniqueId()).forEach(location -> player.sendBlockChange(location, location.getBlock().getBlockData()));
                         cache.remove(player.getUniqueId());
