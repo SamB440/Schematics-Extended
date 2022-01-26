@@ -85,6 +85,11 @@ public class Schematic {
                 final int minZ = minimumPoint.getZ();
                 final int maxZ = maximumPoint.getZ();
 
+                final int width = clipboard.getRegion().getWidth();
+                final int length = clipboard.getRegion().getLength();
+                final int widthCentre = width / 2;
+                final int lengthCentre = length / 2;
+
                 for (int x = minX; x <= maxX; x++) {
                     for (int y = minY; y <= maxY; y++) {
                         for (int z = minZ; z <= maxZ; z++) {
@@ -92,10 +97,22 @@ public class Schematic {
                             BaseBlock block = clipboard.getFullBlock(at);
 
                             // Here we find the relative offset based off the current location.
-                            int offsetX = maxX - x;
-                            int offsetY = maxY - y;
-                            int offsetZ = maxZ - z;
-                            blocks.put(loc.clone().subtract(offsetX, 0, offsetZ).add(0, offsetY, 0), block);
+                            final double offsetX = Math.abs(maxX - x);
+                            final double offsetY = Math.abs(maxY - y);
+                            final double offsetZ = Math.abs(maxZ - z);
+
+                            final double newY = Math.abs(offsetY - loc.getY());
+
+                            Location location = null;
+                            switch (paster.getFacing()) {
+                                case NORTH -> location = new Location(loc.getWorld(), (offsetX * -1 + loc.getBlockX()) + widthCentre, newY, (offsetZ + loc.getBlockZ()) + lengthCentre);
+                                case EAST -> location = new Location(loc.getWorld(), (-offsetZ + loc.getBlockX()) - lengthCentre, newY, (-offsetX - 1) + (width + loc.getBlockZ()) - widthCentre);
+                                case SOUTH -> location = new Location(loc.getWorld(), (offsetX + loc.getBlockX()) - widthCentre, newY, (offsetZ * -1 + loc.getBlockZ()) - lengthCentre);
+                                case WEST -> location = new Location(loc.getWorld(), (offsetZ + loc.getBlockX()) + lengthCentre, newY, (offsetX + 1) - (width - loc.getBlockZ()) + widthCentre);
+                                default -> {}
+                            }
+
+                            if (location != null) blocks.put(location, block);
                         }
                     }
                 }
