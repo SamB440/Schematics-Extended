@@ -19,7 +19,6 @@ import java.util.List;
 
 import com.convallyria.schematics.extended.Scheduler;
 import com.convallyria.schematics.extended.Schematic;
-import com.convallyria.schematics.extended.SchematicNotLoadedException;
 
 public record SchematicListener(SchematicPlugin plugin) implements Listener {
 
@@ -32,32 +31,28 @@ public record SchematicListener(SchematicPlugin plugin) implements Listener {
             switch (pie.getAction()) {
                 case RIGHT_CLICK_AIR:
                 case RIGHT_CLICK_BLOCK:
-                    try {
-                        player.sendMessage(ChatColor.GREEN + "You are now building the schematic; " + plugin.getPlayerManagement().getBuilding(player.getUniqueId()) + "!");
-                        Collection<Location> locationCollection = plugin.getPlayerManagement()
-                                .getBuilding(player.getUniqueId())
-                                .pasteSchematic(player.getTargetBlock(null, 10)
-                                        .getLocation().add(0, 1, 0), player, 1, Schematic.Options.IGNORE_TRANSPARENT);
-                        if (locationCollection != null) {
-                            List<Location> locations = new ArrayList<>(locationCollection);
-                            Scheduler scheduler = new Scheduler();
-                            scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-                                for (Location location : locations) {
-                                    if (locations.get(locations.size() - 1).getBlock().getType() != Material.AIR) {
-                                        scheduler.cancel();
-                                    } else {
-                                        if (location.getBlock().getType() == Material.AIR) {
-                                            location.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, location.getX() + 0.5D, location.getY(), location.getZ() + 0.5D, 2);
-                                        }
+                    player.sendMessage(ChatColor.GREEN + "You are now building the schematic; " + plugin.getPlayerManagement().getBuilding(player.getUniqueId()) + "!");
+                    Collection<Location> locationCollection = plugin.getPlayerManagement()
+                            .getBuilding(player.getUniqueId())
+                            .pasteSchematic(player.getTargetBlock(null, 10)
+                                    .getLocation().add(0, 1, 0), player, 1, Schematic.Options.IGNORE_TRANSPARENT);
+                    if (locationCollection != null) {
+                        List<Location> locations = new ArrayList<>(locationCollection);
+                        Scheduler scheduler = new Scheduler();
+                        scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+                            for (Location location : locations) {
+                                if (locations.get(locations.size() - 1).getBlock().getType() != Material.AIR) {
+                                    scheduler.cancel();
+                                } else {
+                                    if (location.getBlock().getType() == Material.AIR) {
+                                        location.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, location.getX() + 0.5D, location.getY(), location.getZ() + 0.5D, 2);
                                     }
                                 }
-                            }, 0L, 40L));
-                            plugin.getPlayerManagement().removeBuilding(player.getUniqueId());
-                        } else {
-                            player.sendMessage(ChatColor.RED + "You can't place the schematic here, you need to clear the area first!");
-                        }
-                    } catch (SchematicNotLoadedException e) {
-                        e.printStackTrace();
+                            }
+                        }, 0L, 40L));
+                        plugin.getPlayerManagement().removeBuilding(player.getUniqueId());
+                    } else {
+                        player.sendMessage(ChatColor.RED + "You can't place the schematic here, you need to clear the area first!");
                     }
                     break;
                 case LEFT_CLICK_AIR:
@@ -79,7 +74,6 @@ public record SchematicListener(SchematicPlugin plugin) implements Listener {
             player.sendMessage(ChatColor.RED + "Not creating schematic preview since example file does not exist!");
         } else {
             new Schematic(plugin, new File(plugin.getDataFolder() + "/schematics/example.schem"))
-                    .loadSchematic()
                     .previewSchematic(player);
             player.sendMessage(ChatColor.GREEN + "Now previewing schematic!");
         }

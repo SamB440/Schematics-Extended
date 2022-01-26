@@ -1,42 +1,33 @@
 package com.convallyria.schematics.extended;
 
-import com.convallyria.schematics.extended.block.NBTBlock;
 import com.convallyria.schematics.extended.example.BuildTask;
 import com.convallyria.schematics.extended.example.SchematicPlugin;
-import com.convallyria.schematics.extended.material.BlockDataMaterial;
-import com.convallyria.schematics.extended.material.DirectionalBlockDataMaterial;
-import com.convallyria.schematics.extended.material.MultipleFacingBlockDataMaterial;
-import com.convallyria.schematics.extended.util.PacketSender;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.world.block.BaseBlock;
 import me.lucko.helper.scheduler.Task;
 import me.lucko.helper.scheduler.builder.TaskBuilder;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTCompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Tag;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Directional;
-import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,25 +44,19 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Schematic {
 
     private final SchematicPlugin plugin;
+
     private final File schematic;
-
-    private short width = 0;
-    private short height = 0;
-    private short length = 0;
-
-    private byte[] blockDatas;
-
-    private final List<Material> materials = new ArrayList<>();
-    private final LinkedHashMap<Vector, NBTBlock> nbtBlocks = new LinkedHashMap<>();
-    private final LinkedHashMap<Integer, BlockData> blocks = new LinkedHashMap<>();
+    private Clipboard clipboard;
+    private Map<Location, BaseBlock> blocks;
 
     /**
      * @param plugin your plugin instance
      * @param schematic file to the schematic
      */
     public Schematic(final SchematicPlugin plugin, final File schematic) {
-        this.plugin = plugin;
         this.schematic = schematic;
+        this.plugin = plugin;
+
     }
 
     /**
@@ -79,114 +64,56 @@ public class Schematic {
      * @param paster player pasting
      * @param time time in ticks to paste blocks
      * @return collection of locations where schematic blocks will be pasted, null if schematic locations will replace blocks
-     * @throws SchematicNotLoadedException when schematic has not yet been loaded
-     * @see #loadSchematic()
      */
     @Nullable
-    public Collection<Location> pasteSchematic(final Location loc, final Player paster, final int time, final Options... option) throws SchematicNotLoadedException {
-        if (width == 0 || height == 0 || length == 0 || blocks.isEmpty()) {
-            throw new SchematicNotLoadedException("Data has not been loaded yet");
-        }
-
+    public Collection<Location> pasteSchematic(final Location loc, final Player paster, final int time, final Options... option) {
         try {
             final List<Options> options = Arrays.asList(option);
             final Data tracker = new Data();
+            this.blocks = new HashMap<>();
+            try (FileInputStream inputStream = new FileInputStream(schematic)) {
+                ClipboardFormat format = ClipboardFormats.findByFile(schematic);
+                ClipboardReader reader = format.getReader(inputStream);
+                this.clipboard = reader.read();
 
-            final LinkedHashMap<Integer, Location> indexLocations = new LinkedHashMap<>();
-            final LinkedHashMap<Integer, Location> delayedIndexLocations = new LinkedHashMap<>();
+                final BlockVector3 minimumPoint = clipboard.getMinimumPoint();
+                final BlockVector3 maximumPoint = clipboard.getMaximumPoint();
+                final int minX = minimumPoint.getX();
+                final int maxX = maximumPoint.getX();
+                final int minY = minimumPoint.getY();
+                final int maxY = maximumPoint.getY();
+                final int minZ = minimumPoint.getZ();
+                final int maxZ = maximumPoint.getZ();
 
-            final LinkedHashMap<Integer, NBTBlock> nbtData = new LinkedHashMap<>();
+                for (int x = minX; x <= maxX; x++) {
+                    for (int y = minY; y <= maxY; y++) {
+                        for (int z = minZ; z <= maxZ; z++) {
+                            final BlockVector3 at = BlockVector3.at(x, y, z);
+                            BaseBlock block = clipboard.getFullBlock(at);
 
-            final BlockFace face = paster.getFacing();
-
-            /*
-             * Loop through all the blocks within schematic size.
-             */
-            for (int x = 0; x < width; ++x) {
-                for (int y = 0; y < height; ++ y) {
-                    for (int z = 0; z < length; ++z) {
-                        final int index = y * width * length + z * width + x;
-                        final Vector point = new Vector(x, y, z);
-                        Location location = null;
-                        final int width2 = width / 2;
-                        final int length2 = length / 2;
-                        switch (face) {
-                            case NORTH:
-                                location = new Location(loc.getWorld(), (x * - 1 + loc.getBlockX()) + width2, y + loc.getBlockY(), (z + loc.getBlockZ()) + length2);
-                                break;
-                            case EAST:
-                                location = new Location(loc.getWorld(), (-z + loc.getBlockX()) - length2, y + loc.getBlockY(), (-x - 1) + (width + loc.getBlockZ()) - width2);
-                                break;
-                            case SOUTH:
-                                location = new Location(loc.getWorld(), (x + loc.getBlockX()) - width2, y + loc.getBlockY(), (z * - 1 + loc.getBlockZ()) - length2);
-                                break;
-                            case WEST:
-                                location = new Location(loc.getWorld(), (z + loc.getBlockX()) + length2, y + loc.getBlockY(), (x + 1) - (width - loc.getBlockZ()) + width2);
-                                break;
-                            default:
-                                break;
-                        }
-
-                        final BlockData data = blocks.get((int) blockDatas[index]);
-
-                        /*
-                         * Ignore blocks that aren't air. Change this if you want the air to destroy blocks too.
-                         * Add items to delayedBlocks if you want them placed last, or if they get broken.
-                         */
-                        final Material material = data.getMaterial();
-                        if (material != Material.AIR) {
-                            NBTMaterial nbtMaterial = NBTMaterial.fromBukkit(material);
-                            if (nbtMaterial == null || !nbtMaterial.isDelayed()) {
-                                indexLocations.put(index, location);
-                            } else {
-                                delayedIndexLocations.put(index, location);
-                            }
-                        }
-
-                        if (nbtBlocks.containsKey(point)) {
-                            nbtData.put(index, nbtBlocks.get(point));
+                            // Here we find the relative offset based off the current location.
+                            int offsetX = maxX - x;
+                            int offsetY = maxY - y;
+                            int offsetZ = maxZ - z;
+                            blocks.put(loc.clone().subtract(offsetX, 0, offsetZ).add(0, offsetY, 0), block);
                         }
                     }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
-            // Make sure delayed blocks are placed last
-            indexLocations.putAll(delayedIndexLocations);
-            delayedIndexLocations.clear();
+            //TODO parse the blocks with delaying their pasting etc, rotate
 
             /*
              * Verify location of pasting
              */
 
+            //TODO verify the blocks
+
             boolean validated = true;
 
-            for (final Location validate : indexLocations.values()) {
-                final boolean isWater = validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER;
-                final boolean isAir = new Location(validate.getWorld(), validate.getX(), loc.getY() - 1, validate.getZ()).getBlock().getType() == Material.AIR;
-                final boolean isSolid = validate.getBlock().getType() != Material.AIR;
-                final boolean isTransparent = options.contains(Options.IGNORE_TRANSPARENT) && validate.getBlock().isPassable() && validate.getBlock().getType() != Material.AIR;
-
-                if (!options.contains(Options.PLACE_ANYWHERE) && (isWater || isAir || isSolid) && !isTransparent) {
-                    // Show fake block where block is interfering with schematic
-                    if (options.contains(Options.USE_GAME_MARKER)) {
-                        PacketSender.sendBlockHighlight(paster, validate, Color.RED, 100);
-                    } else paster.sendBlockChange(validate, Material.RED_STAINED_GLASS.createBlockData());
-                    validated = false;
-                } else {
-                    // Show fake block for air
-                    if (options.contains(Options.USE_GAME_MARKER)) {
-                        PacketSender.sendBlockHighlight(paster, validate, Color.GREEN, 100);
-                    } else paster.sendBlockChange(validate, Material.GREEN_STAINED_GLASS.createBlockData());
-                }
-
-                if (!options.contains(Options.PREVIEW) && !options.contains(Options.USE_GAME_MARKER)) {
-                    Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-                        if (validate.getBlock().getType() == Material.AIR) paster.sendBlockChange(validate.getBlock().getLocation(), Material.AIR.createBlockData());
-                    }, 60);
-                }
-            }
-
-            if (options.contains(Options.PREVIEW)) return indexLocations.values();
+            if (options.contains(Options.PREVIEW)) return new ArrayList<>();
             if (!validated) return null;
 
             if (options.contains(Options.REALISTIC)) {
@@ -198,44 +125,14 @@ public class Schematic {
 
             tracker.trackCurrentBlock = 0;
 
-            // List of block faces to update *after* the schematic is done pasting.
-            final List<Block> toUpdate = new ArrayList<>();
-            indexLocations.forEach((index, location) -> {
-                final Block block = location.getBlock();
-                final BlockData data = blocks.get((int) blockDatas[index]);
-                if (Tag.STAIRS.getValues().contains(data.getMaterial()) || Tag.FENCES.getValues().contains(data.getMaterial())) {
-                    toUpdate.add(block);
-                }
-            });
-
             Runnable pasteTask = () -> {
                 // Get the block, set the type, data, and then update the state.
-                final List<Location> locations = new ArrayList<>(indexLocations.values());
-                final List<Integer> indexes = new ArrayList<>(indexLocations.keySet());
-
-                final Block block = locations.get(tracker.trackCurrentBlock).getBlock();
-                final BlockData data = blocks.get((int) blockDatas[indexes.get(tracker.trackCurrentBlock)]);
+                Location key = (Location) blocks.keySet().toArray()[tracker.trackCurrentBlock];
+                final BlockData data = BukkitAdapter.adapt(blocks.get(key));
+                final Block block = key.getBlock();
+                System.out.println(key + ":" + data.getMaterial());
                 block.setType(data.getMaterial(), false);
                 block.setBlockData(data);
-                if (nbtData.containsKey(indexes.get(tracker.trackCurrentBlock))) {
-                    final NBTBlock nbtBlock = nbtData.get(indexes.get(tracker.trackCurrentBlock));
-                    try {
-                        final BlockState state = block.getState();
-                        nbtBlock.setData(state);
-                        state.update();
-                    } catch (final WrongIdException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                // Update block faces
-                BlockDataMaterial blockDataMaterial = null;
-                if (block.getState().getBlockData() instanceof Directional) {
-                    blockDataMaterial = new DirectionalBlockDataMaterial(block.getState());
-                } else if (block.getState().getBlockData() instanceof MultipleFacing) {
-                    blockDataMaterial = new MultipleFacingBlockDataMaterial(block.getState());
-                }
-                if (blockDataMaterial != null) block.setBlockData(blockDataMaterial.update(face));
 
                 block.getState().update(true, false);
 
@@ -245,15 +142,14 @@ public class Schematic {
 
                 tracker.trackCurrentBlock++;
 
-                if (tracker.trackCurrentBlock >= locations.size() || tracker.trackCurrentBlock >= indexes.size()) {
+                if (tracker.trackCurrentBlock >= blocks.size()) {
                     task.get().stop();
                     tracker.trackCurrentBlock = 0;
-                    toUpdate.forEach(b -> b.getState().update(true, true));
                 }
             };
 
             task.set(TaskBuilder.newBuilder().sync().every(time).run(pasteTask));
-            return indexLocations.values();
+            return blocks.keySet();
         } catch (final Exception e) {
             e.printStackTrace();
         } return null;
@@ -265,10 +161,8 @@ public class Schematic {
      * @param paster player pasting
      * @param options options to apply to this paste
      * @return list of locations where schematic blocks will be pasted, null if schematic locations will replace blocks
-     * @throws SchematicNotLoadedException when schematic has not yet been loaded
-     * @see #loadSchematic()
      */
-    public Collection<Location> pasteSchematic(final Location location, final Player paster, final Options... options) throws SchematicNotLoadedException {
+    public Collection<Location> pasteSchematic(final Location location, final Player paster, final Options... options) {
         return pasteSchematic(location, paster, 20, options);
     }
 
@@ -282,88 +176,11 @@ public class Schematic {
     }
 
     /**
-     * Loads the schematic file. This should <b>always</b> be used before pasting a schematic.
-     * @return schematic (self)
+     * Returns a list containing every block in the schematic.
+     * @return list of every block in the schematic
      */
-    public Schematic loadSchematic() {
-
-        try {
-            // Read the schematic file. Get the width, height, length, blocks, and block data.
-
-            final FileInputStream fis = new FileInputStream(schematic);
-            final NBTTagCompound nbt = NBTCompressedStreamTools.a(fis);
-
-            width = nbt.getShort("Width");
-            height = nbt.getShort("Height");
-            length = nbt.getShort("Length");
-
-            blockDatas = nbt.getByteArray("BlockData");
-
-            final NBTTagCompound palette = nbt.getCompound("Palette");
-            final NBTTagList tiles = (NBTTagList) nbt.get("BlockEntities");
-
-            // Load NBT data
-            if (tiles != null) {
-                for (final NBTBase tile : tiles) {
-                    if (tile instanceof final NBTTagCompound compound) {
-                        if (compound.isEmpty()) continue;
-                        final NBTMaterial nbtMaterial = NBTMaterial.fromTag(compound);
-                        if (nbtMaterial == null) continue;
-                        final NBTBlock nbtBlock = nbtMaterial.getNbtBlock(compound);
-                        if (!nbtBlock.isEmpty()) nbtBlocks.put(nbtBlock.getOffset(), nbtBlock);
-                    }
-                }
-            }
-
-            /*
-             * 	Explanation:
-             *    The "Palette" is setup like this
-             *      "block_data": id (the ID is a Unique ID that WorldEdit gives that
-             *                    corresponds to an index in the BlockDatas Array)
-             *    So I loop through all the Keys in the "Palette" Compound
-             *    and store the custom ID and BlockData in the palette Map
-             */
-            palette.getKeys().forEach(rawState -> {
-                final int id = palette.getInt(rawState);
-                final BlockData blockData = Bukkit.createBlockData(rawState);
-                blocks.put(id, blockData);
-            });
-
-            // Load all material types - need to do more caching here sometime todo
-            for (byte blockData : blockDatas) {
-                final BlockData data = blocks.get((int) blockData);
-                materials.add(data.getMaterial());
-            }
-            fis.close();
-        } catch (final Exception e) {
-            e.printStackTrace();
-        }
-        return this;
-    }
-
-    /**
-     * Returns the palette key from the schematic file.
-     * The key is the unique id that corresponds to an index in the BlockData array.
-     *
-     * Note that the palette does not contain every block present in the schematic,
-     * it is only a "preview" of what kind of blocks the schematic contains.
-     *
-     * If you are looking to read the material count and type from the schematic,
-     * use {@link #getSchematicMaterialData()}.
-     *
-     * @see #getMaterials()
-     * @return a linked hashmap by the unique id of the block in the palette key
-     */
-    public LinkedHashMap<Integer, BlockData> getPalette() {
+    public Map<Location, BaseBlock> getBlocks() {
         return blocks;
-    }
-
-    /**
-     * Returns a list containing every material-block in the schematic.
-     * @return list of every material-block in the schematic, with duplicates
-     */
-    public List<Material> getMaterials() {
-        return materials;
     }
 
     /**
@@ -376,7 +193,8 @@ public class Schematic {
      */
     public Map<Material, Integer> getSchematicMaterialData() {
         Map<Material, Integer> materialValuesMap = new HashMap<>();
-        for (Material material : materials) {
+        for (BaseBlock baseBlock : blocks.values()) {
+            final Material material = BukkitAdapter.adapt(baseBlock.getBlockType());
             int count = materialValuesMap.getOrDefault(material, 0);
             materialValuesMap.put(material, count + 1);
         }
