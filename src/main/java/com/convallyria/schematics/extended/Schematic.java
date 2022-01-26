@@ -8,6 +8,8 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.math.transform.AffineTransform;
+import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import me.lucko.helper.scheduler.Task;
 import me.lucko.helper.scheduler.builder.TaskBuilder;
@@ -16,7 +18,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Rotatable;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +71,7 @@ public class Schematic {
      */
     @Nullable
     public Collection<Location> pasteSchematic(final Location loc, final Player paster, final int time, final Options... option) {
+        final BlockFace facing = paster.getFacing();
         try {
             final List<Options> options = Arrays.asList(option);
             final Data tracker = new Data();
@@ -76,6 +81,15 @@ public class Schematic {
                 ClipboardReader reader = format.getReader(inputStream);
                 this.clipboard = reader.read();
 
+                // Get facing mod and change by 180 degrees
+                //TODO change based on schematic facing origin
+                final int modX = facing.getModX() * 90 * 2;
+                final int modZ = facing.getModZ() * 90 * 2;
+
+                // Rotate based off the player's facing direction
+                this.clipboard = clipboard.transform(new AffineTransform().rotateY(modX == 0 ? -modZ : -modX));
+
+                // Get all blocks in the schematic
                 final BlockVector3 minimumPoint = clipboard.getMinimumPoint();
                 final BlockVector3 maximumPoint = clipboard.getMaximumPoint();
                 final int minX = minimumPoint.getX();
@@ -101,18 +115,16 @@ public class Schematic {
                             final double offsetY = Math.abs(maxY - y);
                             final double offsetZ = Math.abs(maxZ - z);
 
-                            final double newY = Math.abs(offsetY - loc.getY());
-
                             Location location = null;
-                            switch (paster.getFacing()) {
-                                case NORTH -> location = new Location(loc.getWorld(), (offsetX * -1 + loc.getBlockX()) + widthCentre, newY, (offsetZ + loc.getBlockZ()) + lengthCentre);
-                                case EAST -> location = new Location(loc.getWorld(), (-offsetZ + loc.getBlockX()) - lengthCentre, newY, (-offsetX - 1) + (width + loc.getBlockZ()) - widthCentre);
-                                case SOUTH -> location = new Location(loc.getWorld(), (offsetX + loc.getBlockX()) - widthCentre, newY, (offsetZ * -1 + loc.getBlockZ()) - lengthCentre);
-                                case WEST -> location = new Location(loc.getWorld(), (offsetZ + loc.getBlockX()) + lengthCentre, newY, (offsetX + 1) - (width - loc.getBlockZ()) + widthCentre);
-                                default -> {}
+                            switch (facing) {
+                                case SOUTH -> location = new Location(loc.getWorld(), loc.getX() + widthCentre, loc.getBlockY(), loc.getZ() + lengthCentre);
+                                case EAST -> location = new Location(loc.getWorld(), loc.getX() - lengthCentre, loc.getBlockY(), loc.getZ() - widthCentre);
+                                case WEST -> location = new Location(loc.getWorld(), loc.getX() - widthCentre, loc.getBlockY(), loc.getZ() - lengthCentre);
+                                case NORTH -> location = new Location(loc.getWorld(), loc.getX() + lengthCentre, loc.getBlockY(), loc.getZ() + widthCentre);
+                                default -> {
+                                }
                             }
-
-                            if (location != null) blocks.put(location, block);
+                            blocks.put(location.subtract(offsetX, offsetY, offsetZ), block);
                         }
                     }
                 }
