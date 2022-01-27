@@ -32,6 +32,10 @@ tasks {
         dependsOn(reobfJar)
     }
 
+    build {
+        dependsOn(shadowJar)
+    }
+
     shadowJar {
         relocate("me.lucko.helper", "com.convallyria.schematics.extended.lib.helper")
     }
