@@ -30,9 +30,8 @@ dependencies {
 }
 
 tasks {
-    // Configure reobfJar to run when invoking the build task
-    assemble {
-        dependsOn(reobfJar)
+    build {
+        dependsOn(shadowJar)
     }
 
     shadowJar {

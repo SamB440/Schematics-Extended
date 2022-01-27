@@ -2,6 +2,8 @@ package com.convallyria.schematics.extended;
 
 import com.convallyria.schematics.extended.example.BuildTask;
 import com.convallyria.schematics.extended.example.SchematicPlugin;
+import com.convallyria.schematics.extended.util.MathsUtil;
+import com.convallyria.schematics.extended.util.PacketSender;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
@@ -9,7 +11,6 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.transform.AffineTransform;
-import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import me.lucko.helper.scheduler.Task;
 import me.lucko.helper.scheduler.builder.TaskBuilder;
@@ -20,7 +21,6 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Rotatable;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +28,15 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -51,7 +54,6 @@ public class Schematic {
 
     private final File schematic;
     private Clipboard clipboard;
-    private Map<Location, BaseBlock> blocks;
 
     /**
      * @param plugin your plugin instance
@@ -72,22 +74,22 @@ public class Schematic {
     @Nullable
     public Collection<Location> pasteSchematic(final Location loc, final Player paster, final int time, final Options... option) {
         final BlockFace facing = paster.getFacing();
+        final Map<Location, BaseBlock> blocks = new ConcurrentHashMap<>(); //TODO cache
         try {
             final List<Options> options = Arrays.asList(option);
             final Data tracker = new Data();
-            this.blocks = new HashMap<>();
             try (FileInputStream inputStream = new FileInputStream(schematic)) {
                 ClipboardFormat format = ClipboardFormats.findByFile(schematic);
                 ClipboardReader reader = format.getReader(inputStream);
                 this.clipboard = reader.read();
 
-                // Get facing mod and change by 180 degrees
-                //TODO change based on schematic facing origin
-                final int modX = facing.getModX() * 90 * 2;
-                final int modZ = facing.getModZ() * 90 * 2;
-
                 // Rotate based off the player's facing direction
-                this.clipboard = clipboard.transform(new AffineTransform().rotateY(modX == 0 ? -modZ : -modX));
+                double yaw = paster.getEyeLocation().getYaw();
+                // So unfortunately, WorldEdit doesn't support anything other than multiples of 90.
+                // Here we round it to the nearest multiple of 90.
+                yaw = MathsUtil.roundHalfUp((int) yaw, 90);
+                // Apply the rotation to the clipboard
+                this.clipboard = clipboard.transform(new AffineTransform().rotateY(yaw));
 
                 // Get all blocks in the schematic
                 final BlockVector3 minimumPoint = clipboard.getMinimumPoint();
@@ -110,21 +112,15 @@ public class Schematic {
                             final BlockVector3 at = BlockVector3.at(x, y, z);
                             BaseBlock block = clipboard.getFullBlock(at);
 
+                            // Ignore air blocks, change if you want
+                            if (block.getBlockType().getMaterial().isAir()) continue;
+
                             // Here we find the relative offset based off the current location.
                             final double offsetX = Math.abs(maxX - x);
                             final double offsetY = Math.abs(maxY - y);
                             final double offsetZ = Math.abs(maxZ - z);
 
-                            Location location = null;
-                            switch (facing) {
-                                case SOUTH -> location = new Location(loc.getWorld(), loc.getX() + widthCentre, loc.getBlockY(), loc.getZ() + lengthCentre);
-                                case EAST -> location = new Location(loc.getWorld(), loc.getX() - lengthCentre, loc.getBlockY(), loc.getZ() - widthCentre);
-                                case WEST -> location = new Location(loc.getWorld(), loc.getX() - widthCentre, loc.getBlockY(), loc.getZ() - lengthCentre);
-                                case NORTH -> location = new Location(loc.getWorld(), loc.getX() + lengthCentre, loc.getBlockY(), loc.getZ() + widthCentre);
-                                default -> {
-                                }
-                            }
-                            blocks.put(location.subtract(offsetX, offsetY, offsetZ), block);
+                            blocks.put(loc.clone().subtract(offsetX - widthCentre, offsetY, offsetZ - lengthCentre), block);
                         }
                     }
                 }
@@ -139,6 +135,11 @@ public class Schematic {
              */
 
             //TODO verify the blocks
+            blocks.forEach(((location, baseBlock) -> {
+                if (options.contains(Options.USE_GAME_MARKER)) {
+                    PacketSender.sendBlockHighlight(paster, location, Color.GREEN, 51);
+                }
+            }));
 
             boolean validated = true;
 
@@ -208,9 +209,9 @@ public class Schematic {
      * Returns a list containing every block in the schematic.
      * @return list of every block in the schematic
      */
-    public Map<Location, BaseBlock> getBlocks() {
+    /*public Map<Location, BaseBlock> getBlocks() {
         return blocks;
-    }
+    }*/
 
     /**
      * Returns a material-count map of the materials present in this schematic.
@@ -220,7 +221,7 @@ public class Schematic {
      *
      * @return material-count map of materials in the schematic
      */
-    public Map<Material, Integer> getSchematicMaterialData() {
+    /*public Map<Material, Integer> getSchematicMaterialData() {
         Map<Material, Integer> materialValuesMap = new HashMap<>();
         for (BaseBlock baseBlock : blocks.values()) {
             final Material material = BukkitAdapter.adapt(baseBlock.getBlockType());
@@ -228,7 +229,7 @@ public class Schematic {
             materialValuesMap.put(material, count + 1);
         }
         return materialValuesMap;
-    }
+    }*/
 
     /**
      * Hacky method to avoid "final".
@@ -269,5 +270,6 @@ public class Schematic {
          * <a href="https://bugs.mojang.com/browse/MC-234030">https://bugs.mojang.com/browse/MC-234030</a>
          */
         USE_GAME_MARKER
+        //TODO fake block option
     }
 }

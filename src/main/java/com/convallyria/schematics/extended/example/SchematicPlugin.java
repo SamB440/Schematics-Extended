@@ -14,7 +14,7 @@ public class SchematicPlugin extends ExtendedJavaPlugin {
 
     @Override
     public void enable() {
-        this.saveResource("schematics/example.schem", true);
+        this.saveResource("schematics/example.schem", false);
         this.playerManagement = new PlayerManagement(this);
         registerListeners();
     }

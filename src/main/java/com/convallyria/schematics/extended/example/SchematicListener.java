@@ -50,7 +50,7 @@ public record SchematicListener(SchematicPlugin plugin) implements Listener {
                                 }
                             }
                         }, 0L, 40L));
-                        plugin.getPlayerManagement().removeBuilding(player.getUniqueId());
+                        //plugin.getPlayerManagement().removeBuilding(player.getUniqueId());
                     } else {
                         player.sendMessage(ChatColor.RED + "You can't place the schematic here, you need to clear the area first!");
                     }
