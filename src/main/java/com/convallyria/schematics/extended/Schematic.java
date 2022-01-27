@@ -14,6 +14,7 @@ import com.sk89q.worldedit.math.transform.AffineTransform;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import me.lucko.helper.scheduler.Task;
 import me.lucko.helper.scheduler.builder.TaskBuilder;
+import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -102,8 +103,10 @@ public class Schematic {
                 final int maxZ = maximumPoint.getZ();
 
                 final int width = clipboard.getRegion().getWidth();
+                final int height = clipboard.getRegion().getHeight();
                 final int length = clipboard.getRegion().getLength();
                 final int widthCentre = width / 2;
+                final int heightCentre = height / 2;
                 final int lengthCentre = length / 2;
 
                 for (int x = minX; x <= maxX; x++) {
@@ -120,7 +123,7 @@ public class Schematic {
                             final double offsetY = Math.abs(maxY - y);
                             final double offsetZ = Math.abs(maxZ - z);
 
-                            blocks.put(loc.clone().subtract(offsetX - widthCentre, offsetY, offsetZ - lengthCentre), block);
+                            blocks.put(loc.clone().subtract(offsetX - widthCentre, offsetY - heightCentre, offsetZ - lengthCentre), block);
                         }
                     }
                 }
@@ -128,20 +131,35 @@ public class Schematic {
                 e.printStackTrace();
             }
 
-            //TODO parse the blocks with delaying their pasting etc, rotate
-
             /*
              * Verify location of pasting
              */
-
-            //TODO verify the blocks
-            blocks.forEach(((location, baseBlock) -> {
-                if (options.contains(Options.USE_GAME_MARKER)) {
-                    PacketSender.sendBlockHighlight(paster, location, Color.GREEN, 51);
-                }
-            }));
-
             boolean validated = true;
+            for (Location validate : blocks.keySet()) {
+                final boolean isWater = validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER;
+                final boolean isAir = clipboard.getMinimumPoint().getY() == validate.getY() && new Location(validate.getWorld(), validate.getX(), validate.getY() - 1, validate.getZ()).getBlock().getType().isAir();
+                final boolean isSolid = validate.getBlock().getType().isSolid();
+                final boolean isTransparent = options.contains(Options.IGNORE_TRANSPARENT) && validate.getBlock().isPassable() && !validate.getBlock().getType().isAir();
+
+                if (!options.contains(Options.PLACE_ANYWHERE) && (isWater || isAir || isSolid) && !isTransparent) {
+                    // Show fake block where block is interfering with schematic
+                    if (options.contains(Options.USE_GAME_MARKER)) {
+                        PacketSender.sendBlockHighlight(paster, validate, Color.RED, 51);
+                    } else paster.sendBlockChange(validate, Material.RED_STAINED_GLASS.createBlockData());
+                    validated = false;
+                } else {
+                    // Show fake block for air
+                    if (options.contains(Options.USE_GAME_MARKER)) {
+                        PacketSender.sendBlockHighlight(paster, validate, Color.GREEN, 51);
+                    } else paster.sendBlockChange(validate, Material.GREEN_STAINED_GLASS.createBlockData());
+                }
+
+                if (!options.contains(Options.PREVIEW) && !options.contains(Options.USE_GAME_MARKER)) {
+                    Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+                        if (validate.getBlock().getType() == Material.AIR) paster.sendBlockChange(validate.getBlock().getLocation(), Material.AIR.createBlockData());
+                    }, 60);
+                }
+            }
 
             if (options.contains(Options.PREVIEW)) return new ArrayList<>();
             if (!validated) return null;
@@ -160,7 +178,6 @@ public class Schematic {
                 Location key = (Location) blocks.keySet().toArray()[tracker.trackCurrentBlock];
                 final BlockData data = BukkitAdapter.adapt(blocks.get(key));
                 final Block block = key.getBlock();
-                System.out.println(key + ":" + data.getMaterial());
                 block.setType(data.getMaterial(), false);
                 block.setBlockData(data);
 

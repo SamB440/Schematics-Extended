@@ -34,10 +34,6 @@ tasks {
         dependsOn(shadowJar)
     }
 
-    build {
-        dependsOn(shadowJar)
-    }
-
     shadowJar {
         relocate("me.lucko.helper", "com.convallyria.schematics.extended.lib.helper")
     }
