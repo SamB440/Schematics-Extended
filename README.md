@@ -41,8 +41,8 @@ You can find the documentation on the Spigot thread: https://www.spigotmc.org/th
 ## Branches
 
 Schematics Extended has branches for the WorldEdit API and previous versions.
-* [WorldEdit API](tree/worldedit-api)
-* [1.17.1](tree/ver/1.17.1)
+* [WorldEdit API](https://github.com/SamB440/Schematics-Extended/tree/worldedit-api)
+* [1.17.1](https://github.com/SamB440/Schematics-Extended/tree/ver/1.17.1)
 
 ## Getting Started
 
