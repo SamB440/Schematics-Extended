@@ -1,13 +1,11 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("io.papermc.paperweight.userdev") version "1.3.3"
     id("java")
 }
 
 group = "com.convallyria"
-version = "2.0.5"
-
-java.sourceCompatibility = JavaVersion.VERSION_16
-java.targetCompatibility = JavaVersion.VERSION_16
+version = "2.0.6"
 
 repositories {
     mavenCentral()
@@ -20,24 +18,44 @@ repositories {
 }
 
 dependencies {
+    paperDevBundle("1.18.1-R0.1-SNAPSHOT")
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
 
     implementation("me.lucko:helper:5.6.8")
-
-    compileOnly("org.spigotmc:spigot:1.17.1-R0.1-SNAPSHOT") // Included in codemc nms repo
     compileOnly("org.jetbrains:annotations:22.0.0")
 }
 
-tasks.build {
-    dependsOn(tasks.shadowJar)
-}
-
-tasks.shadowJar {
-    relocate("me.lucko.helper", "com.convallyria.schematics.extended.lib.helper")
-}
-
-tasks.processResources {
-    filesMatching("plugin.yml") {
-        expand("version" to project.version)
+tasks {
+    // Configure reobfJar to run when invoking the build task
+    assemble {
+        dependsOn(reobfJar)
     }
+
+    shadowJar {
+        relocate("me.lucko.helper", "com.convallyria.schematics.extended.lib.helper")
+    }
+
+    compileJava {
+        options.encoding = Charsets.UTF_8.name() // We want UTF-8 for everything
+
+        // Set the release flag. This configures what version bytecode the compiler will emit, as well as what JDK APIs are usable.
+        // See https://openjdk.java.net/jeps/247 for more information.
+        options.release.set(17)
+    }
+
+    javadoc {
+        options.encoding = Charsets.UTF_8.name() // We want UTF-8 for everything
+    }
+
+    processResources {
+        filteringCharset = Charsets.UTF_8.name() // We want UTF-8 for everything
+        filesMatching("plugin.yml") {
+            expand("version" to project.version)
+        }
+    }
+}
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }

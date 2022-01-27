@@ -3,13 +3,13 @@ package com.convallyria.schematics.extended.util;
 import com.convallyria.schematics.extended.example.SchematicPlugin;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.PacketDataSerializer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.PacketPlayOutCustomPayload;
-import net.minecraft.resources.MinecraftKey;
+import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.resources.ResourceLocation;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_17_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_18_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -51,13 +51,13 @@ public class PacketSender {
     }
 
     private static void sendPayload(@NotNull final Player receiver, String channel, ByteBuf bytes) {
-        PacketPlayOutCustomPayload customPayload = new PacketPlayOutCustomPayload(new MinecraftKey(channel), new PacketDataSerializer(bytes));
+        ClientboundCustomPayloadPacket customPayload = new ClientboundCustomPayloadPacket(new ResourceLocation(channel), new FriendlyByteBuf(bytes));
         sendPacket((CraftPlayer) receiver, customPayload);
     }
 
     private static void sendPacket(@NotNull final CraftPlayer player, @NotNull final Packet packet) {
         Bukkit.getScheduler().runTaskAsynchronously(
-                JavaPlugin.getPlugin(SchematicPlugin.class), () -> player.getHandle().b.sendPacket(packet)
+                JavaPlugin.getPlugin(SchematicPlugin.class), () -> player.getHandle().connection.send(packet)
         );
     }
 }

@@ -9,10 +9,9 @@ import com.convallyria.schematics.extended.material.MultipleFacingBlockDataMater
 import com.convallyria.schematics.extended.util.PacketSender;
 import me.lucko.helper.scheduler.Task;
 import me.lucko.helper.scheduler.builder.TaskBuilder;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTCompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -289,9 +287,7 @@ public class Schematic {
 
         try {
             // Read the schematic file. Get the width, height, length, blocks, and block data.
-
-            final FileInputStream fis = new FileInputStream(schematic);
-            final NBTTagCompound nbt = NBTCompressedStreamTools.a(fis);
+            final CompoundTag nbt = NbtIo.read(schematic);
 
             width = nbt.getShort("Width");
             height = nbt.getShort("Height");
@@ -299,13 +295,13 @@ public class Schematic {
 
             blockDatas = nbt.getByteArray("BlockData");
 
-            final NBTTagCompound palette = nbt.getCompound("Palette");
-            final NBTTagList tiles = (NBTTagList) nbt.get("BlockEntities");
+            final CompoundTag palette = nbt.getCompound("Palette");
+            final ListTag tiles = (ListTag) nbt.get("BlockEntities");
 
             // Load NBT data
             if (tiles != null) {
-                for (final NBTBase tile : tiles) {
-                    if (tile instanceof final NBTTagCompound compound) {
+                for (final net.minecraft.nbt.Tag tile : tiles) {
+                    if (tile instanceof final CompoundTag compound) {
                         if (compound.isEmpty()) continue;
                         final NBTMaterial nbtMaterial = NBTMaterial.fromTag(compound);
                         if (nbtMaterial == null) continue;
@@ -323,7 +319,7 @@ public class Schematic {
              *    So I loop through all the Keys in the "Palette" Compound
              *    and store the custom ID and BlockData in the palette Map
              */
-            palette.getKeys().forEach(rawState -> {
+            palette.getAllKeys().forEach(rawState -> {
                 final int id = palette.getInt(rawState);
                 final BlockData blockData = Bukkit.createBlockData(rawState);
                 blocks.put(id, blockData);
@@ -334,7 +330,6 @@ public class Schematic {
                 final BlockData data = blocks.get((int) blockData);
                 materials.add(data.getMaterial());
             }
-            fis.close();
         } catch (final Exception e) {
             e.printStackTrace();
         }

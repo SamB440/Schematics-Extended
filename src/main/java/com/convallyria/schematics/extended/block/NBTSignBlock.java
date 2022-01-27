@@ -4,7 +4,7 @@ import com.convallyria.schematics.extended.WrongIdException;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.bukkit.block.BlockState;
 
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ public class NBTSignBlock extends NBTBlock {
 
     private final Map<Position, String> lines = new HashMap<>();
 
-    public NBTSignBlock(final NBTTagCompound nbtTag) {
+    public NBTSignBlock(final CompoundTag nbtTag) {
         super(nbtTag);
     }
 
@@ -50,7 +50,7 @@ public class NBTSignBlock extends NBTBlock {
             return lines.get(position);
         }
 
-        final NBTTagCompound compound = this.getNbtTag();
+        final CompoundTag compound = this.getNbtTag();
         if (compound.getString("Id").equals("minecraft:sign")) {
             final String s1 = compound.getString(position.getId());
             final JsonObject jsonObject = new Gson().fromJson(s1, JsonObject.class);

@@ -1,8 +1,8 @@
 package com.convallyria.schematics.extended.block;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-
+import com.convallyria.schematics.extended.WrongIdException;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.inventory.ItemStack;
@@ -10,13 +10,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.convallyria.schematics.extended.WrongIdException;
-
 public class NBTChestBlock extends NBTBlock {
 
     private final Map<Integer, ItemStack> allItems = new HashMap<>();
 
-    public NBTChestBlock(final NBTTagCompound nbtTag) {
+    public NBTChestBlock(final CompoundTag nbtTag) {
         super(nbtTag);
     }
 
@@ -45,12 +43,12 @@ public class NBTChestBlock extends NBTBlock {
     public Map<Integer, ItemStack> getItems() throws WrongIdException {
         if (!allItems.isEmpty()) return allItems;
 
-        final NBTTagCompound compound = this.getNbtTag();
+        final CompoundTag compound = this.getNbtTag();
         if (compound.getString("Id").equals("minecraft:chest")) {
             if (compound.get("Items") != null) {
-                final NBTTagList items = (NBTTagList) compound.get("Items");
+                final ListTag items = (ListTag) compound.get("Items");
                 for (int i = 0; i < items.size(); i++) {
-                    final NBTTagCompound anItem = items.getCompound(i);
+                    final CompoundTag anItem = items.getCompound(i);
                     final Material mat = Material.valueOf(anItem.getString("id").replace("minecraft:", "").toUpperCase());
                     final ItemStack item = new ItemStack(mat, anItem.getInt("Count"));
                     allItems.put(anItem.getInt("Slot"), item);

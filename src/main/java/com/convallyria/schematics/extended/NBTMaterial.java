@@ -3,7 +3,7 @@ package com.convallyria.schematics.extended;
 import com.convallyria.schematics.extended.block.NBTBlock;
 import com.convallyria.schematics.extended.block.NBTChestBlock;
 import com.convallyria.schematics.extended.block.NBTSignBlock;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.bukkit.Material;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -154,16 +154,16 @@ public enum NBTMaterial {
         return delayed;
     }
 
-    public NBTBlock getNbtBlock(final NBTTagCompound tagCompound) throws ReflectiveOperationException {
+    public NBTBlock getNbtBlock(final CompoundTag tagCompound) throws ReflectiveOperationException {
         return nbtBlock.getConstructor(tagCompound.getClass()).newInstance(tagCompound);
     }
 
-    public static Material getBukkitFromTag(final NBTTagCompound nbtTagCompound) {
+    public static Material getBukkitFromTag(final CompoundTag nbtTagCompound) {
         return Material.matchMaterial(nbtTagCompound.getString("Id"));
     }
 
     @Nullable
-    public static NBTMaterial fromTag(final NBTTagCompound nbtTagCompound) {
+    public static NBTMaterial fromTag(final CompoundTag nbtTagCompound) {
         try {
             return NBTMaterial.valueOf(nbtTagCompound.getString("Id").
                     replace("minecraft:", "").
