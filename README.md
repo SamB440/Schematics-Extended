@@ -23,6 +23,7 @@
 ## Table Of Contents
 
 * [About the Project](#about-the-project)
+* [Branches](#branches)
 * [Getting Started](#getting-started)
     * [Prerequisites](#prerequisites)
     * [Setting up](#setting-up)
@@ -33,9 +34,15 @@
 
 ## About The Project
 
-Schematics extended allows you to paste schematics block-by-block. It also allows fetching the palette and materials of a schematic before even pasting it.
+Schematics Extended allows you to paste schematics block-by-block. It also allows fetching the palette and materials of a schematic before even pasting it.
 
 You can find the documentation on the Spigot thread: https://www.spigotmc.org/threads/previewing-and-pasting-schematics-block-by-block.324817/
+
+## Branches
+
+Schematics Extended has branches for the WorldEdit API and previous versions.
+* [WorldEdit API](tree/worldedit-api)
+* [1.17.1](tree/ver/1.17.1)
 
 ## Getting Started
 
