@@ -225,7 +225,7 @@ public class Schematic {
 
                 tracker.trackCurrentBlock++;
 
-                if (tracker.trackCurrentBlock >= blocks.size()) {
+                if (tracker.trackCurrentBlock >= pasteBlocks.size()) {
                     task.get().stop();
                     tracker.trackCurrentBlock = 0;
                 }
