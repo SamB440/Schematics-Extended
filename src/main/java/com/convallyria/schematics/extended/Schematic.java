@@ -35,6 +35,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,6 +55,7 @@ public class Schematic {
     private final SchematicPlugin plugin;
 
     private final File schematic;
+    private final List<BaseBlock> blocks;
     private Clipboard clipboard;
 
     /**
@@ -61,9 +63,38 @@ public class Schematic {
      * @param schematic file to the schematic
      */
     public Schematic(final SchematicPlugin plugin, final File schematic) {
-        this.schematic = schematic;
         this.plugin = plugin;
+        this.schematic = schematic;
+        this.blocks = new ArrayList<>();
 
+        // Read and cache
+        try (FileInputStream inputStream = new FileInputStream(schematic)) {
+            ClipboardFormat format = ClipboardFormats.findByFile(schematic);
+            ClipboardReader reader = format.getReader(inputStream);
+            this.clipboard = reader.read();
+
+            // Get all blocks in the schematic
+            final BlockVector3 minimumPoint = clipboard.getMinimumPoint();
+            final BlockVector3 maximumPoint = clipboard.getMaximumPoint();
+            final int minX = minimumPoint.getX();
+            final int maxX = maximumPoint.getX();
+            final int minY = minimumPoint.getY();
+            final int maxY = maximumPoint.getY();
+            final int minZ = minimumPoint.getZ();
+            final int maxZ = maximumPoint.getZ();
+
+            for (int x = minX; x <= maxX; x++) {
+                for (int y = minY; y <= maxY; y++) {
+                    for (int z = minZ; z <= maxZ; z++) {
+                        final BlockVector3 at = BlockVector3.at(x, y, z);
+                        BaseBlock block = clipboard.getFullBlock(at);
+                        blocks.add(block);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -74,70 +105,65 @@ public class Schematic {
      */
     @Nullable
     public Collection<Location> pasteSchematic(final Location loc, final Player paster, final int time, final Options... option) {
-        final BlockFace facing = paster.getFacing();
-        final Map<Location, BaseBlock> blocks = new ConcurrentHashMap<>(); //TODO cache
+        final Map<Location, BaseBlock> pasteBlocks = new ConcurrentHashMap<>(); //TODO cache
+        final List<Options> options = Arrays.asList(option);
         try {
-            final List<Options> options = Arrays.asList(option);
             final Data tracker = new Data();
-            try (FileInputStream inputStream = new FileInputStream(schematic)) {
-                ClipboardFormat format = ClipboardFormats.findByFile(schematic);
-                ClipboardReader reader = format.getReader(inputStream);
-                this.clipboard = reader.read();
 
-                // Rotate based off the player's facing direction
-                double yaw = paster.getEyeLocation().getYaw();
-                // So unfortunately, WorldEdit doesn't support anything other than multiples of 90.
-                // Here we round it to the nearest multiple of 90.
-                yaw = MathsUtil.roundHalfUp((int) yaw, 90);
-                // Apply the rotation to the clipboard
-                this.clipboard = clipboard.transform(new AffineTransform().rotateY(yaw));
+            // Rotate based off the player's facing direction
+            double yaw = paster.getEyeLocation().getYaw();
+            // So unfortunately, WorldEdit doesn't support anything other than multiples of 90.
+            // Here we round it to the nearest multiple of 90.
+            yaw = MathsUtil.roundHalfUp((int) yaw, 90);
+            // Apply the rotation to the clipboard
+            final Clipboard transformedClipboard = clipboard.transform(new AffineTransform().rotateY(yaw));
 
-                // Get all blocks in the schematic
-                final BlockVector3 minimumPoint = clipboard.getMinimumPoint();
-                final BlockVector3 maximumPoint = clipboard.getMaximumPoint();
-                final int minX = minimumPoint.getX();
-                final int maxX = maximumPoint.getX();
-                final int minY = minimumPoint.getY();
-                final int maxY = maximumPoint.getY();
-                final int minZ = minimumPoint.getZ();
-                final int maxZ = maximumPoint.getZ();
+            // Get all blocks in the schematic
+            final BlockVector3 minimumPoint = transformedClipboard.getMinimumPoint();
+            final BlockVector3 maximumPoint = transformedClipboard.getMaximumPoint();
+            final int minX = minimumPoint.getX();
+            final int maxX = maximumPoint.getX();
+            final int minY = minimumPoint.getY();
+            final int maxY = maximumPoint.getY();
+            final int minZ = minimumPoint.getZ();
+            final int maxZ = maximumPoint.getZ();
 
-                final int width = clipboard.getRegion().getWidth();
-                final int height = clipboard.getRegion().getHeight();
-                final int length = clipboard.getRegion().getLength();
-                final int widthCentre = width / 2;
-                final int heightCentre = height / 2;
-                final int lengthCentre = length / 2;
+            final int width = transformedClipboard.getRegion().getWidth();
+            final int height = transformedClipboard.getRegion().getHeight();
+            final int length = transformedClipboard.getRegion().getLength();
+            final int widthCentre = width / 2;
+            final int heightCentre = height / 2;
+            final int lengthCentre = length / 2;
 
-                for (int x = minX; x <= maxX; x++) {
-                    for (int y = minY; y <= maxY; y++) {
-                        for (int z = minZ; z <= maxZ; z++) {
-                            final BlockVector3 at = BlockVector3.at(x, y, z);
-                            BaseBlock block = clipboard.getFullBlock(at);
+            int minBlockY = loc.getWorld().getMaxHeight();
+            for (int x = minX; x <= maxX; x++) {
+                for (int y = minY; y <= maxY; y++) {
+                    for (int z = minZ; z <= maxZ; z++) {
+                        final BlockVector3 at = BlockVector3.at(x, y, z);
+                        BaseBlock block = transformedClipboard.getFullBlock(at);
 
-                            // Ignore air blocks, change if you want
-                            if (block.getBlockType().getMaterial().isAir()) continue;
+                        // Ignore air blocks, change if you want
+                        if (block.getBlockType().getMaterial().isAir()) continue;
 
-                            // Here we find the relative offset based off the current location.
-                            final double offsetX = Math.abs(maxX - x);
-                            final double offsetY = Math.abs(maxY - y);
-                            final double offsetZ = Math.abs(maxZ - z);
+                        // Here we find the relative offset based off the current location.
+                        final double offsetX = Math.abs(maxX - x);
+                        final double offsetY = Math.abs(maxY - y);
+                        final double offsetZ = Math.abs(maxZ - z);
 
-                            blocks.put(loc.clone().subtract(offsetX - widthCentre, offsetY - heightCentre, offsetZ - lengthCentre), block);
-                        }
+                        final Location offsetLoc = loc.clone().subtract(offsetX - widthCentre, offsetY - heightCentre, offsetZ - lengthCentre);
+                        if (offsetLoc.getBlockY() < minBlockY) minBlockY = offsetLoc.getBlockY();
+                        pasteBlocks.put(offsetLoc, block);
                     }
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
 
             /*
              * Verify location of pasting
              */
             boolean validated = true;
-            for (Location validate : blocks.keySet()) {
+            for (Location validate : pasteBlocks.keySet()) {
                 final boolean isWater = validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER;
-                final boolean isAir = clipboard.getMinimumPoint().getY() == validate.getY() && new Location(validate.getWorld(), validate.getX(), validate.getY() - 1, validate.getZ()).getBlock().getType().isAir();
+                final boolean isAir = minBlockY == validate.getBlockY() && validate.clone().subtract(0, 1, 0).getBlock().getType().isAir();
                 final boolean isSolid = validate.getBlock().getType().isSolid();
                 final boolean isTransparent = options.contains(Options.IGNORE_TRANSPARENT) && validate.getBlock().isPassable() && !validate.getBlock().getType().isAir();
 
@@ -175,8 +201,8 @@ public class Schematic {
 
             Runnable pasteTask = () -> {
                 // Get the block, set the type, data, and then update the state.
-                Location key = (Location) blocks.keySet().toArray()[tracker.trackCurrentBlock];
-                final BlockData data = BukkitAdapter.adapt(blocks.get(key));
+                Location key = (Location) pasteBlocks.keySet().toArray()[tracker.trackCurrentBlock];
+                final BlockData data = BukkitAdapter.adapt(pasteBlocks.get(key));
                 final Block block = key.getBlock();
                 block.setType(data.getMaterial(), false);
                 block.setBlockData(data);
@@ -196,7 +222,7 @@ public class Schematic {
             };
 
             task.set(TaskBuilder.newBuilder().sync().every(time).run(pasteTask));
-            return blocks.keySet();
+            return pasteBlocks.keySet();
         } catch (final Exception e) {
             e.printStackTrace();
         } return null;
@@ -226,9 +252,9 @@ public class Schematic {
      * Returns a list containing every block in the schematic.
      * @return list of every block in the schematic
      */
-    /*public Map<Location, BaseBlock> getBlocks() {
+    public List<BaseBlock> getBlocks() {
         return blocks;
-    }*/
+    }
 
     /**
      * Returns a material-count map of the materials present in this schematic.
@@ -238,15 +264,15 @@ public class Schematic {
      *
      * @return material-count map of materials in the schematic
      */
-    /*public Map<Material, Integer> getSchematicMaterialData() {
+    public Map<Material, Integer> getSchematicMaterialData() {
         Map<Material, Integer> materialValuesMap = new HashMap<>();
-        for (BaseBlock baseBlock : blocks.values()) {
+        for (BaseBlock baseBlock : blocks) {
             final Material material = BukkitAdapter.adapt(baseBlock.getBlockType());
             int count = materialValuesMap.getOrDefault(material, 0);
             materialValuesMap.put(material, count + 1);
         }
         return materialValuesMap;
-    }*/
+    }
 
     /**
      * Hacky method to avoid "final".
