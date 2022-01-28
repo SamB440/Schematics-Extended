@@ -302,7 +302,6 @@ public class Schematic {
         /**
          * A realistic building method. Builds from the ground up, instead of in the default slices.
          */
-        @Deprecated
         REALISTIC,
         /**
          * Bypasses the verification check and allows placing anywhere.
