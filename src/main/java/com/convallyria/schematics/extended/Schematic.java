@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 /**
  * A utility class that previews and pastes schematics block-by-block with asynchronous support.
  * <br></br>
- * @version 2.0.5
+ * @version 2.0.6
  * @author SamB440 - Schematic previews, centering and pasting block-by-block, class itself
  * @author brainsynder - 1.13+ Palette Schematic Reader
  * @author Math0424 - Rotation calculations
