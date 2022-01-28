@@ -20,7 +20,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
@@ -29,17 +28,16 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * A utility class that previews and pastes schematics block-by-block with asynchronous support.
@@ -105,7 +103,7 @@ public class Schematic {
      */
     @Nullable
     public Collection<Location> pasteSchematic(final Location loc, final Player paster, final int time, final Options... option) {
-        final Map<Location, BaseBlock> pasteBlocks = new ConcurrentHashMap<>(); //TODO cache
+        final Map<Location, BaseBlock> pasteBlocks = new LinkedHashMap<>();
         final List<Options> options = Arrays.asList(option);
         try {
             final Data tracker = new Data();
@@ -162,6 +160,7 @@ public class Schematic {
              */
             boolean validated = true;
             for (Location validate : pasteBlocks.keySet()) {
+                final BaseBlock baseBlock = pasteBlocks.get(validate);
                 final boolean isWater = validate.clone().subtract(0, 1, 0).getBlock().getType() == Material.WATER;
                 final boolean isAir = minBlockY == validate.getBlockY() && validate.clone().subtract(0, 1, 0).getBlock().getType().isAir();
                 final boolean isSolid = validate.getBlock().getType().isSolid();
@@ -175,7 +174,9 @@ public class Schematic {
                     validated = false;
                 } else {
                     // Show fake block for air
-                    if (options.contains(Options.USE_GAME_MARKER)) {
+                    if (options.contains(Options.USE_FAKE_BLOCKS)) {
+                        paster.sendBlockChange(validate, BukkitAdapter.adapt(baseBlock));
+                    } else if (options.contains(Options.USE_GAME_MARKER)) {
                         PacketSender.sendBlockHighlight(paster, validate, Color.GREEN, 51);
                     } else paster.sendBlockChange(validate, Material.GREEN_STAINED_GLASS.createBlockData());
                 }
@@ -191,7 +192,16 @@ public class Schematic {
             if (!validated) return null;
 
             if (options.contains(Options.REALISTIC)) {
-                //TODO
+                Map<Location, BaseBlock> sorted
+                        = pasteBlocks.entrySet()
+                        .stream()
+                        .sorted(Comparator.comparingInt(i -> i.getKey().getBlockY()))
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue,
+                                (e1, e2) -> e1, LinkedHashMap::new));
+                pasteBlocks.clear();
+                pasteBlocks.putAll(sorted);
             }
 
             // Start pasting each block every tick
@@ -291,9 +301,6 @@ public class Schematic {
         PREVIEW,
         /**
          * A realistic building method. Builds from the ground up, instead of in the default slices.
-         * <hr></hr>
-         * <b>*WIP, CURRENTLY DOES NOTHING*</b>
-         * @deprecated does nothing
          */
         @Deprecated
         REALISTIC,
@@ -312,7 +319,14 @@ public class Schematic {
          * {@link Color#GREEN} type will display as black. This can be fixed using a ResourcePack, described here:
          * <a href="https://bugs.mojang.com/browse/MC-234030">https://bugs.mojang.com/browse/MC-234030</a>
          */
-        USE_GAME_MARKER
-        //TODO fake block option
+        USE_GAME_MARKER,
+        /**
+         * Instead of game markers or glass blocks,
+         * uses the actual block types of the schematic to show valid build areas.
+         * <hr></hr>
+         * Note that this will still use red glass for invalid build areas.
+         * You can optionally provide the {@link Options#USE_GAME_MARKER} option to replace the red glass.
+         */
+        USE_FAKE_BLOCKS
     }
 }
