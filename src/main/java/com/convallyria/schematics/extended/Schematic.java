@@ -287,7 +287,7 @@ public class Schematic {
 
         try {
             // Read the schematic file. Get the width, height, length, blocks, and block data.
-            final CompoundTag nbt = NbtIo.read(schematic);
+            final CompoundTag nbt = NbtIo.readCompressed(schematic);
 
             width = nbt.getShort("Width");
             height = nbt.getShort("Height");
