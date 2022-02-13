@@ -6,6 +6,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -25,8 +26,9 @@ public class PacketSender {
         final int y = location.getBlockY();
         final int z = location.getBlockZ();
         packet.writeLong(blockPosToLong(x, y, z));
-        packet.writeInt(colour.getRGB());
-        //writeString(packet, "test");
+        int argb = (0xFF & 175) << 24 | (0xFF & colour.getRed()) << 16 | (0xFF & colour.getGreen()) << 8 | (0xFF & colour.getBlue());
+        packet.writeInt(argb);
+        writeString(packet, "");
         packet.writeInt(time);
 
         sendPayload(player, "debug/game_test_add_marker", packet);
@@ -57,7 +59,7 @@ public class PacketSender {
 
     private static void sendPacket(@NotNull final CraftPlayer player, @NotNull final Packet packet) {
         Bukkit.getScheduler().runTaskAsynchronously(
-                JavaPlugin.getPlugin(SchematicPlugin.class), () -> player.getHandle().connection.send(packet)
+                JavaPlugin.getPlugin(SchematicPlugin.class), () -> player.getHandle().networkManager.send(packet)
         );
     }
 }
