@@ -1,10 +1,10 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     id("java")
 }
 
 group = "com.convallyria"
-version = "2.0.6"
+version = "2.0.7"
 
 repositories {
     mavenCentral()
@@ -18,15 +18,15 @@ repositories {
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 
-    implementation("me.lucko:helper:5.6.8")
+    implementation("me.lucko:helper:5.6.9")
 
     compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.0-SNAPSHOT") {
         exclude("com.google")
         exclude("org.bukkit")
         exclude("org.spigotmc")
     }
-    compileOnly("org.jetbrains:annotations:22.0.0")
-    compileOnly("org.spigotmc:spigot:1.18.1-R0.1-SNAPSHOT") // Included in codemc nms repo
+    compileOnly("org.jetbrains:annotations:23.0.0")
+    compileOnly("org.spigotmc:spigot:1.18.2-R0.1-SNAPSHOT") // Included in codemc nms repo
 }
 
 tasks {
@@ -35,6 +35,8 @@ tasks {
     }
 
     shadowJar {
+        archiveClassifier.set("")
+
         relocate("me.lucko.helper", "com.convallyria.schematics.extended.lib.helper")
     }
 
