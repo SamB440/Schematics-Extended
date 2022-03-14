@@ -20,7 +20,7 @@ dependencies {
 
     implementation("me.lucko:helper:5.6.9")
 
-    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.0-SNAPSHOT") {
+    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.2.10-SNAPSHOT") {
         exclude("com.google")
         exclude("org.bukkit")
         exclude("org.spigotmc")

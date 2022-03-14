@@ -11,6 +11,7 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.transform.AffineTransform;
+import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import me.lucko.helper.scheduler.Task;
 import me.lucko.helper.scheduler.builder.TaskBuilder;
@@ -114,7 +115,9 @@ public class Schematic {
             // Here we round it to the nearest multiple of 90.
             yaw = MathsUtil.roundHalfUp((int) yaw, 90);
             // Apply the rotation to the clipboard
-            final Clipboard transformedClipboard = clipboard.transform(new AffineTransform().rotateY(yaw));
+            final ClipboardHolder clipboardHolder = new ClipboardHolder(clipboard);
+            clipboardHolder.setTransform(new AffineTransform().rotateY(yaw));
+            final Clipboard transformedClipboard = clipboardHolder.getClipboard();
 
             // Get all blocks in the schematic
             final BlockVector3 minimumPoint = transformedClipboard.getMinimumPoint();
