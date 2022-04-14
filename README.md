@@ -11,7 +11,7 @@
   </p>
 
   <center>
-    <a href="https://discord.gg/convallyria">
+    <a href="https://discord.gg/fh62mxU">
       <img alt="Discord" src="https://img.shields.io/discord/282242806695591938">
     </a>
   </center>
@@ -88,7 +88,7 @@ Also, if possible, please use `feature` or `fix` branch prefixes.
 
 ## License
 
-Distributed under the GNU GPL v3 License. See [LICENSE](https://github.com/SamB440/Schematics-Extended/blob/main/LICENSE.md) for more information.
+Distributed under the GNU GPL v3 License. See [LICENSE](https://github.com/SamB440/Schematics-Extended/blob/master/LICENSE) for more information.
 Please provide credit to the authors/contributors below if used.
 
 ## Authors & contributors
