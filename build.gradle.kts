@@ -18,12 +18,12 @@ repositories {
 }
 
 dependencies {
-    paperDevBundle("1.18.2-R0.1-SNAPSHOT")
+    paperDevBundle("1.19-R0.1-SNAPSHOT")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 
-    implementation("me.lucko:helper:5.6.8")
-    compileOnly("org.jetbrains:annotations:22.0.0")
+    implementation("me.lucko:helper:5.6.10")
+    compileOnly("org.jetbrains:annotations:23.0.0")
 }
 
 tasks {
