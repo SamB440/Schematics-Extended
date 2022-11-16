@@ -38,10 +38,11 @@ Schematics Extended allows you to paste schematics block-by-block. It also allow
 
 You can find the documentation on the Spigot thread: https://www.spigotmc.org/threads/previewing-and-pasting-schematics-block-by-block.324817/
 
-## Branches
+## Branches & Modules
 
-Schematics Extended has branches for the WorldEdit API and previous versions.
-* [WorldEdit API](https://github.com/SamB440/Schematics-Extended/tree/worldedit-api)
+Schematics Extended has modules for the WorldEdit API and branches for previous versions.
+* [WorldEdit API](https://github.com/SamB440/Schematics-Extended/tree/master/worldedit)
+* [NMS](https://github.com/SamB440/Schematics-Extended/tree/master/nms)
 * [1.17.1](https://github.com/SamB440/Schematics-Extended/tree/ver/1.17.1)
 
 ## Getting Started

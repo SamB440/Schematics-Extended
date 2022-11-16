@@ -1,0 +1,8 @@
+name: SchematicsExtended
+version: "${version}"
+main: com.convallyria.schematics.extended.nms.example.SchematicPlugin
+api-version: 1.19
+load: STARTUP
+authors: [SamB440, brainsynder, Math0424]
+description: Build schematics block-by-block!
+website: https://gitlab.com/SamB440/Schematics-Extended
