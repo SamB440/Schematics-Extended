@@ -1,3 +1,6 @@
+## This repository hasn't been updated in a while!
+Some of the techniques used here are outdated. For example, the preview highlight feature has been removed by Mojang in modern versions. I recommend using display entities instead. I also recommend using structure blocks over WorldEdit schematics.
+
 <br/>
 <p align="center">
   <img src="https://www.convallyria.com/images/schematicsgif.gif">
